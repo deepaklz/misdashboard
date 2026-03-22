@@ -139,30 +139,44 @@ function App() {
 
       const computedSprints = Array.from(allSprintsMap.values()).filter(s => s.boards.length > 0);
       
-      // Apply custom sorting to boards and employees within each sprint
+      // Group unique employees for each sprint for the flat sidebar list
       computedSprints.forEach(sprint => {
-        // Sort boards based on menuSequence.boards
-        sprint.boards.sort((a, b) => {
-          const indexA = menuSequence.boards.indexOf(a.name);
-          const indexB = menuSequence.boards.indexOf(b.name);
+        const sprintEmployeesMap = new Map();
+        
+        sprint.boards.forEach(board => {
+          board.employees.forEach(emp => {
+            const name = emp.name;
+            const designatedBoard = menuSequence.mapping[name];
+            
+            // If employee not yet added OR this is their designated board, update/add them
+            if (!sprintEmployeesMap.has(name) || designatedBoard === board.name) {
+              const boardName = designatedBoard || board.name;
+              let tag = 'unknown';
+              if (boardName.toLowerCase().includes('eng')) tag = 'eng';
+              else if (boardName.toLowerCase().includes('ai')) tag = 'ai';
+              else if (boardName.toLowerCase().includes('de')) tag = 'de';
+              else if (boardName.toLowerCase().includes('nwp')) tag = 'nwp';
+
+              sprintEmployeesMap.set(name, {
+                ...emp,
+                boardName: boardName.split(' ')[0], // "ENG board" -> "ENG"
+                tagClass: `tag-${tag}`,
+                sprintId: board.sprintId,
+                boardId: board.id
+              });
+            }
+          });
+        });
+
+        // Convert map to array and sort relative to menuSequence.employees
+        sprint.uniqueEmployees = Array.from(sprintEmployeesMap.values()).sort((a, b) => {
+          const indexA = menuSequence.employees.indexOf(a.name);
+          const indexB = menuSequence.employees.indexOf(b.name);
           
           if (indexA !== -1 && indexB !== -1) return indexA - indexB;
           if (indexA !== -1) return -1;
           if (indexB !== -1) return 1;
           return a.name.localeCompare(b.name);
-        });
-
-        // Sort employees within each board based on menuSequence.employees
-        sprint.boards.forEach(board => {
-          board.employees.sort((a, b) => {
-            const indexA = menuSequence.employees.indexOf(a.name);
-            const indexB = menuSequence.employees.indexOf(b.name);
-            
-            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-            if (indexA !== -1) return -1;
-            if (indexB !== -1) return 1;
-            return a.name.localeCompare(b.name);
-          });
         });
       });
 
@@ -281,36 +295,19 @@ function App() {
                     
                     {selectedSprint?.id === sprint.id && (
                       <div className="nav-item-group">
-                        {sprint.boards.map(board => (
-                          <div key={`${sprint.id}-${board.id}`} className="nav-item-group nested">
+                        <div className="nav-children" style={{paddingLeft: 0}}>
+                          {sprint.uniqueEmployees.map(employee => (
                             <button
-                              className={`nav-item-parent ${selectedBoard?.id === board.id && !selectedEmployee ? 'active' : ''}`}
-                              onClick={() => toggleBoard(`${sprint.id}-${board.id}`, board)}
-                              style={{
-                                color: selectedBoard?.id === board.id && !selectedEmployee ? 'var(--blue)' : 'var(--muted)',
-                                fontWeight: selectedBoard?.id === board.id && !selectedEmployee ? '600' : '400'
-                              }}
+                              key={employee.id}
+                              className={`nav-item-child ${selectedEmployee?.id === employee.id ? 'active' : ''}`}
+                              onClick={() => selectEmployee(employee, employee.boardName, employee.boardId, employee.sprintId)}
+                              style={{paddingLeft: '32px', display: 'flex', alignItems: 'center'}}
                             >
-                              {expandedBoards[`${sprint.id}-${board.id}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                              <Users size={14} />
-                              <span>{board.name}</span>
+                              <span style={{flex: 1}}>{employee.name}</span>
+                              <span className={`board-tag ${employee.tagClass}`}>{employee.boardName}</span>
                             </button>
-                            
-                            {expandedBoards[`${sprint.id}-${board.id}`] && (
-                              <div className="nav-children">
-                                {board.employees.map(employee => (
-                                  <button
-                                    key={employee.id}
-                                    className={`nav-item-child ${selectedEmployee?.id === employee.id ? 'active' : ''}`}
-                                    onClick={() => selectEmployee(employee, board.name, board.id, sprint.id)}
-                                  >
-                                    {employee.name}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

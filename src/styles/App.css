@@ -160,6 +160,22 @@ body {
 .text-success { color: var(--green); }
 .text-warning { color: var(--amber); }
 
+/* Board Tags for Sidebar */
+.board-tag {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.tag-eng { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
+.tag-ai { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-mid); }
+.tag-de { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+.tag-nwp { background: var(--orange-light); color: var(--orange); border: 1px solid var(--amber-mid); }
+.tag-unknown { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
 @media (max-width: 1024px) {
   .sidebar { width: 280px; }
   .main-content { margin-left: 280px; padding: 24px; }
