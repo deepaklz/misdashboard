@@ -26,17 +26,16 @@ const Dashboard = ({ employee, board, currentView, sprintBoards, sprintName, spr
     setLoading(true);
     setErrorMsg(null);
     try {
-      // 1. Try aggregating from pre-loaded board issues first
-      let aggregatedIssues = [];
-      const seenIssueKeys = new Set();
+      // Use a Map to ensure each issue is only counted once, using issue.id for uniqueness
+      const employeeIssuesMap = new Map();
 
+      // 1. Try aggregating from pre-loaded board issues first
       sprintBoards.forEach(board => {
         if (board.issues) {
           board.issues.forEach(issue => {
             if (String(issue.fields.assignee?.accountId) === String(employeeId)) {
-              if (!seenIssueKeys.has(issue.key)) {
-                seenIssueKeys.add(issue.key);
-                aggregatedIssues.push(issue);
+              if (!employeeIssuesMap.has(issue.id)) {
+                employeeIssuesMap.set(issue.id, issue);
               }
             }
           });
@@ -48,13 +47,13 @@ const Dashboard = ({ employee, board, currentView, sprintBoards, sprintName, spr
       // or that don't match our pre-loaded board filters.
       const globalIssues = await jiraService.getEmployeeIssuesGlobal(employeeId, ids);
       globalIssues.forEach(issue => {
-        if (!seenIssueKeys.has(issue.key)) {
-          seenIssueKeys.add(issue.key);
-          aggregatedIssues.push(issue);
+        if (!employeeIssuesMap.has(issue.id)) {
+          employeeIssuesMap.set(issue.id, issue);
         }
       });
       
-      const employeeIssues = aggregatedIssues;
+      const employeeIssues = Array.from(employeeIssuesMap.values());
+      console.log(`Deduplicated employee issues for ${employee?.name || employeeId}: ${employeeIssues.length}`);
 
       // Use actual sprint dates if available from Jira, else fallback
       const sprintStartStr = sprintDates?.start ? new Date(sprintDates.start).toISOString().split('T')[0] : (() => {
@@ -113,27 +112,39 @@ const Dashboard = ({ employee, board, currentView, sprintBoards, sprintName, spr
     const statusCounts = {};
     const typeCounts = {};
 
+    // Deduplicate issues across all target boards by ID
+    const uniqueIssuesMap = new Map();
+    targetBoards.forEach(board => {
+      board.issues.forEach(issue => {
+        if (!uniqueIssuesMap.has(issue.id)) {
+          uniqueIssuesMap.set(issue.id, issue);
+        }
+      });
+    });
+
+    const uniqueIssues = Array.from(uniqueIssuesMap.values());
+    
+    uniqueIssues.forEach(issue => {
+      totalIssues++;
+      const type = issue.fields.issuetype?.name || 'Unknown';
+      const status = issue.fields.status?.name || 'Unknown';
+      
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+      if (type === 'Epic') epics++;
+      else if (type === 'Story') stories++;
+      else if (type === 'Task') tasks++;
+      else if (type === 'Sub-task') subtasks++;
+      else if (type === 'Bug') bugs++;
+      
+      if (issue.fields.status?.statusCategory?.key === 'done') done++;
+      if (!issue.fields.assignee) unassigned++;
+    });
+
     targetBoards.forEach(board => {
       projectLabels.push(board.name);
       projectIssueCounts.push(board.issues.length);
-      
-      board.issues.forEach(issue => {
-        totalIssues++;
-        const type = issue.fields.issuetype?.name || 'Unknown';
-        const status = issue.fields.status?.name || 'Unknown';
-        
-        typeCounts[type] = (typeCounts[type] || 0) + 1;
-        statusCounts[status] = (statusCounts[status] || 0) + 1;
-
-        if (type === 'Epic') epics++;
-        else if (type === 'Story') stories++;
-        else if (type === 'Task') tasks++;
-        else if (type === 'Sub-task') subtasks++;
-        else if (type === 'Bug') bugs++;
-        
-        if (issue.fields.status?.statusCategory?.key === 'done') done++;
-        if (!issue.fields.assignee) unassigned++;
-      });
     });
 
     const doneRate = totalIssues > 0 ? ((done / totalIssues) * 100).toFixed(1) : 0;
