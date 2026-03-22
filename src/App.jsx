@@ -77,10 +77,18 @@ function App() {
           }
           
           const group = allSprintsMap.get(sprintKey);
+          
+          // Manual Overrides for specific sprint names
+          if (sprintKey.toLowerCase().includes('sprint 2')) {
+            group.startDate = '2026-03-10';
+            group.endDate = '2026-03-23';
+          }
+          
           if (sprint.state === 'active' && group.state !== 'active') {
              group.state = 'active';
-             group.startDate = sprint.startDate;
-             group.endDate = sprint.endDate;
+             // Only use Jira dates if they haven't been overridden already
+             if (!group.startDate) group.startDate = sprint.startDate;
+             if (!group.endDate) group.endDate = sprint.endDate;
           }
 
           // Loop over ALL initialized boards executing explicit JQL filter mapping natively
