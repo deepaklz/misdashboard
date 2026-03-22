@@ -105,12 +105,18 @@ function App() {
                   issues.forEach(issue => {
                     if (issue.fields.assignee) {
                       const assignee = issue.fields.assignee;
-                      if (!employeesMap.has(assignee.accountId)) {
-                         employeesMap.set(assignee.accountId, {
-                           id: assignee.accountId,
-                           name: assignee.displayName,
-                           email: assignee.emailAddress
-                         });
+                      const name = assignee.displayName;
+                      
+                      // Filter duplicates: Only add if this is the designated board for this person OR if person is new
+                      const designatedBoard = menuSequence.mapping[name];
+                      if (!designatedBoard || designatedBoard === board.name) {
+                        if (!employeesMap.has(assignee.accountId)) {
+                           employeesMap.set(assignee.accountId, {
+                             id: assignee.accountId,
+                             name: name,
+                             email: assignee.emailAddress
+                           });
+                        }
                       }
                     }
                   });
