@@ -175,17 +175,26 @@ export const jiraService = {
                resolution.includes('won\'t do');
       };
 
+      const totalTasksCount = tasks.length;
+      const totalSubtasksCount = subtasks.length;
+      const completedTasksCount = tasks.filter(t => isDone(t)).length;
+      const completedSubtasksCount = subtasks.filter(t => isDone(t)).length;
+      const droppedTasksCount = tasks.filter(t => isDropped(t)).length;
+      const droppedSubtasksCount = subtasks.filter(t => isDropped(t)).length;
+
       return {
         name: period.name,
         dateRange: `${this.formatDate(period.start)} - ${this.formatDate(period.end)}`,
-        tasks: tasks.length,
-        subtasks: subtasks.length,
-        completedTasks: tasks.filter(t => isDone(t)).length,
-        completedSubtasks: subtasks.filter(t => isDone(t)).length,
+        tasks: totalTasksCount,
+        subtasks: totalSubtasksCount,
+        completedTasks: completedTasksCount,
+        completedSubtasks: completedSubtasksCount,
         completedOnTimeTasks: tasks.filter(t => this.isCompletedOnTime(t, period.end)).length,
         completedOnTimeSubtasks: subtasks.filter(t => this.isCompletedOnTime(t, period.end)).length,
-        droppedTasks: tasks.filter(t => isDropped(t)).length,
-        droppedSubtasks: subtasks.filter(t => isDropped(t)).length
+        droppedTasks: droppedTasksCount,
+        droppedSubtasks: droppedSubtasksCount,
+        notCompletedTasks: totalTasksCount - completedTasksCount - droppedTasksCount,
+        notCompletedSubtasks: totalSubtasksCount - completedSubtasksCount - droppedSubtasksCount
       };
     });
   },
