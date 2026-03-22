@@ -164,6 +164,17 @@ export const jiraService = {
                status?.name?.toLowerCase().includes('completed');
       };
 
+      const isDropped = (issue) => {
+        const status = issue.fields.status?.name?.toLowerCase() || '';
+        const resolution = issue.fields.resolution?.name?.toLowerCase() || '';
+        return status.includes('dropped') || 
+               status.includes('cancelled') || 
+               status.includes('discarded') ||
+               resolution.includes('dropped') ||
+               resolution.includes('cancelled') ||
+               resolution.includes('won\'t do');
+      };
+
       return {
         name: period.name,
         dateRange: `${this.formatDate(period.start)} - ${this.formatDate(period.end)}`,
@@ -172,7 +183,9 @@ export const jiraService = {
         completedTasks: tasks.filter(t => isDone(t)).length,
         completedSubtasks: subtasks.filter(t => isDone(t)).length,
         completedOnTimeTasks: tasks.filter(t => this.isCompletedOnTime(t, period.end)).length,
-        completedOnTimeSubtasks: subtasks.filter(t => this.isCompletedOnTime(t, period.end)).length
+        completedOnTimeSubtasks: subtasks.filter(t => this.isCompletedOnTime(t, period.end)).length,
+        droppedTasks: tasks.filter(t => isDropped(t)).length,
+        droppedSubtasks: subtasks.filter(t => isDropped(t)).length
       };
     });
   },

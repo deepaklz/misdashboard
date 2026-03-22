@@ -269,9 +269,13 @@ const Dashboard = ({ employee, board, currentView, sprintBoards, sprintName, spr
                       <span style={{color:'var(--muted)'}}>Completed Items:</span>
                       <span style={{fontWeight:600}}>{period.completedTasks + period.completedSubtasks}</span>
                     </div>
-                    <div style={{display:'flex', justifyContent:'space-between'}}>
-                      <span style={{color:'var(--muted)'}}>Items On-Time:</span>
+                    <div style={{display:'flex', justifyContent:'space-between', paddingBottom:'8px', borderBottom:'1px solid var(--border)'}}>
+                      <span style={{color:'var(--muted)'}}>Task On-Time:</span>
                       <span className="text-success" style={{fontWeight:600}}>{period.completedOnTimeTasks + period.completedOnTimeSubtasks}</span>
+                    </div>
+                    <div style={{display:'flex', justifyContent:'space-between'}}>
+                      <span style={{color:'var(--muted)'}}>Dropped Tasks:</span>
+                      <span className="text-danger" style={{fontWeight:600}}>{period.droppedTasks + period.droppedSubtasks}</span>
                     </div>
                   </div>
                 </div>
