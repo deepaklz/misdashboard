@@ -1,0 +1,230 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #FFFFFF;
+}
+
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 320px;
+  background: #FFFFFF;
+  border-right: 1px solid #E8EAED;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #DFE1E5;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #BDC1C6;
+}
+
+.sidebar-header {
+  padding: 32px 24px;
+  background: linear-gradient(135deg, #0052CC 0%, #2684FF 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-nav {
+  padding: 16px 0;
+  flex: 1;
+}
+
+.nav-section {
+  margin-bottom: 8px;
+}
+
+.nav-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5F6368;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-section-header svg {
+  color: #0052CC;
+}
+
+.nav-item-group {
+  margin-bottom: 4px;
+}
+
+.nav-item-group.nested {
+  margin-left: 16px;
+}
+
+.nav-item-parent,
+.nav-item-child {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: #3C4043;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.nav-item-parent {
+  font-weight: 500;
+}
+
+.nav-item-child {
+  padding-left: 56px;
+  font-size: 13px;
+  color: #5F6368;
+}
+
+.nav-item-parent:hover,
+.nav-item-child:hover {
+  background: linear-gradient(90deg, rgba(0, 82, 204, 0.08) 0%, transparent 100%);
+  color: #0052CC;
+}
+
+.nav-item-parent.active,
+.nav-item-child.active {
+  background: linear-gradient(90deg, rgba(0, 82, 204, 0.12) 0%, rgba(0, 82, 204, 0.04) 100%);
+  color: #0052CC;
+  font-weight: 600;
+}
+
+.nav-item-parent.active::before,
+.nav-item-child.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #0052CC 0%, #2684FF 100%);
+  border-radius: 0 4px 4px 0;
+}
+
+.nav-children {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-left: 320px;
+  padding: 32px;
+  background: #F8F9FA;
+  min-height: 100vh;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 280px;
+  }
+  
+  .main-content {
+    margin-left: 280px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+}

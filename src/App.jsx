@@ -1,0 +1,300 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, Users, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
+import SecurityOverlay from './components/SecurityOverlay';
+import Dashboard from './components/Dashboard';
+import jiraService from './services/jiraService';
+import moment from 'moment';
+import './styles/App.css';
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [expandedSprints, setExpandedSprints] = useState({});
+  const [expandedBoards, setExpandedBoards] = useState({});
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [currentView, setCurrentView] = useState('current-sprint');
+  const [loading, setLoading] = useState(false);
+  const [selectedSprint, setSelectedSprint] = useState(null);
+  const [selectedBoard, setSelectedBoard] = useState(null);
+  const [sprints, setSprints] = useState([]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadJiraData();
+      
+      // Auto-refresh data every 1 hour (3600000 ms)
+      const interval = setInterval(() => {
+        console.log("Auto-refreshing JIRA data...");
+        loadJiraData();
+      }, 3600000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const loadJiraData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch all boards to find sprints
+      const boards = await jiraService.getBoards();
+      
+      const allSprintsMap = new Map();
+      const uniqueSprintsFetchMap = new Map();
+
+      // Collect all unique sprints first to prevent duplicate API calls
+      await Promise.all(
+        boards.map(async (board) => {
+          try {
+            const activeSprints = await jiraService.getTargetSprints(board.id);
+            if (activeSprints) {
+              activeSprints.forEach(s => {
+                if (!uniqueSprintsFetchMap.has(s.id)) {
+                  uniqueSprintsFetchMap.set(s.id, s);
+                }
+              });
+            }
+          } catch (error) {}
+        })
+      );
+
+      // 2. Safely scan EVERY board for EVERY unique Sprint. 
+      // This mathematically guarantees no team is dropped just because a Sprint formally "originated" on a different Agile Board in Jira natively
+      await Promise.all(
+        Array.from(uniqueSprintsFetchMap.values()).map(async (sprint) => {
+          
+          const sprintKey = sprint.name;
+          if (!allSprintsMap.has(sprintKey)) {
+            allSprintsMap.set(sprintKey, {
+              id: sprint.id,
+              name: sprint.name,
+              state: sprint.state,
+              startDate: sprint.startDate,
+              endDate: sprint.endDate,
+              boards: [],
+              allIds: new Set([sprint.id])
+            });
+          } else {
+            allSprintsMap.get(sprintKey).allIds.add(sprint.id);
+          }
+          
+          const group = allSprintsMap.get(sprintKey);
+          if (sprint.state === 'active' && group.state !== 'active') {
+             group.state = 'active';
+             group.startDate = sprint.startDate;
+             group.endDate = sprint.endDate;
+          }
+
+          // Loop over ALL initialized boards executing explicit JQL filter mapping natively
+          await Promise.all(
+            boards.map(async (board) => {
+              try {
+                // Returns ONLY issues that belong to THIS Sprint AND exist formally across THIS Agile Board
+                const issues = await jiraService.getBoardSprintIssues(board.id, sprint.id);
+
+                if (issues && issues.length > 0) {
+                  const employeesMap = new Map();
+                  issues.forEach(issue => {
+                    if (issue.fields.assignee) {
+                      const assignee = issue.fields.assignee;
+                      if (!employeesMap.has(assignee.accountId)) {
+                         employeesMap.set(assignee.accountId, {
+                           id: assignee.accountId,
+                           name: assignee.displayName,
+                           email: assignee.emailAddress
+                         });
+                      }
+                    }
+                  });
+
+                  group.boards.push({
+                    id: board.id,
+                    name: board.name, // The exact Agile Board Name (E.g. "Product", "Engineering", "Design")
+                    sprintId: sprint.id,
+                    employees: Array.from(employeesMap.values()),
+                    issues: issues
+                  });
+                }
+              } catch (e) {
+                // A 400/404 here just implies the queried board completely excludes issues referencing this specific sprint natively.
+              }
+            })
+          );
+        })
+      );
+
+      const computedSprints = Array.from(allSprintsMap.values()).filter(s => s.boards.length > 0);
+      
+      // Sort sprints (Active first, then future, then id)
+      computedSprints.sort((a, b) => {
+        if (a.state === 'active' && b.state !== 'active') return -1;
+        if (a.state !== 'active' && b.state === 'active') return 1;
+        return b.id - a.id;
+      });
+
+      setSprints(computedSprints);
+      
+      if (computedSprints.length > 0) {
+        // Automatically select the first sprint
+        setSelectedSprint(computedSprints[0]);
+        setSelectedBoard(null);
+        setSelectedEmployee(null);
+        
+        // Auto-expand the first board of that sprint
+        if (computedSprints[0].boards.length > 0) {
+          const firstSprint = computedSprints[0];
+          const firstBoard = firstSprint.boards[0];
+          setExpandedBoards({ [`${firstSprint.id}-${firstBoard.id}`]: true });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading JIRA data:', error);
+      alert('Failed to load JIRA data. Please check your API credentials in Vercel environment variables.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMonth = (month) => {
+    setExpandedSprints(prev => ({
+      ...prev,
+      [month]: !prev[month]
+    }));
+  };
+
+  const toggleBoard = (boardId, board = null) => {
+    // Tapping the board name selects that board's dashboard view
+    if (board) {
+      setSelectedBoard(board);
+      setSelectedEmployee(null);
+    }
+    
+    setExpandedBoards(prev => ({
+      ...prev,
+      [boardId]: !prev[boardId]
+    }));
+  };
+
+  const selectEmployee = (employee, boardName, boardId, sprintId) => {
+    setSelectedEmployee({ 
+      ...employee, 
+      board: boardName,
+      boardId: boardId,
+      sprintId: sprintId
+    });
+    setSelectedBoard(null);
+  };
+
+  if (!isAuthenticated) {
+    return <SecurityOverlay onAuthenticate={() => setIsAuthenticated(true)} />;
+  }
+
+  return (
+    <div className="app-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h1 className="sidebar-title">JIRA MetalCloud</h1>
+          <p className="sidebar-subtitle">EM-MIS Dashboard</p>
+        </div>
+
+        <nav className="sidebar-nav">
+          {loading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#5F6368' }}>
+              Loading JIRA data...
+            </div>
+          ) : (
+            <>
+              {/* Multi-Sprint Sections */}
+              {sprints.length === 0 ? (
+                <div style={{ padding: '16px 24px', fontSize: '13px', color: '#5F6368' }}>
+                  No active or future sprints found
+                </div>
+              ) : (
+                sprints.map(sprint => (
+                  <div key={sprint.id} className="nav-section">
+                    <div 
+                      className={`nav-section-header ${selectedSprint?.id === sprint.id ? 'active' : ''}`}
+                      onClick={() => { 
+                        setSelectedSprint(sprint); 
+                        setSelectedBoard(null);
+                        setSelectedEmployee(null); 
+                      }}
+                      style={{
+                        cursor: 'pointer', 
+                        background: selectedSprint?.id === sprint.id ? 'var(--blue-light)' : 'transparent',
+                        color: selectedSprint?.id === sprint.id ? 'var(--blue)' : 'var(--muted)',
+                        transition: 'background 0.2s',
+                        borderRadius: '0 8px 8px 0',
+                        marginRight: '12px'
+                      }}
+                    >
+                      <BarChart3 size={18} style={{minWidth:'18px'}} />
+                      <span style={{flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                        {sprint.name} {sprint.startDate ? `- ${moment.utc(sprint.startDate).format('D MMM')} - ${moment.utc(sprint.endDate).format('D MMM')}` : ''}
+                      </span>
+                      {sprint.state === 'active' && (
+                        <div style={{minWidth: '6px', height: '6px', borderRadius: '50%', background: 'var(--green)', marginLeft: '10px'}} title="Active Sprint" />
+                      )}
+                    </div>
+                    
+                    {selectedSprint?.id === sprint.id && (
+                      <div className="nav-item-group">
+                        {sprint.boards.map(board => (
+                          <div key={`${sprint.id}-${board.id}`} className="nav-item-group nested">
+                            <button
+                              className={`nav-item-parent ${selectedBoard?.id === board.id && !selectedEmployee ? 'active' : ''}`}
+                              onClick={() => toggleBoard(`${sprint.id}-${board.id}`, board)}
+                              style={{
+                                color: selectedBoard?.id === board.id && !selectedEmployee ? 'var(--blue)' : 'var(--muted)',
+                                fontWeight: selectedBoard?.id === board.id && !selectedEmployee ? '600' : '400'
+                              }}
+                            >
+                              {expandedBoards[`${sprint.id}-${board.id}`] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              <Users size={14} />
+                              <span>{board.name}</span>
+                            </button>
+                            
+                            {expandedBoards[`${sprint.id}-${board.id}`] && (
+                              <div className="nav-children">
+                                {board.employees.map(employee => (
+                                  <button
+                                    key={employee.id}
+                                    className={`nav-item-child ${selectedEmployee?.id === employee.id ? 'active' : ''}`}
+                                    onClick={() => selectEmployee(employee, board.name, board.id, sprint.id)}
+                                  >
+                                    {employee.name}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </>
+          )}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <Dashboard 
+          employee={selectedEmployee} 
+          board={selectedBoard}
+          currentView={currentView} 
+          sprintBoards={selectedSprint?.boards || []}
+          sprintName={selectedSprint?.name}
+          sprintIds={selectedSprint?.allIds ? Array.from(selectedSprint.allIds) : []}
+          sprintDates={{
+            start: selectedSprint?.startDate,
+            end: selectedSprint?.endDate
+          }}
+        />
+      </main>
+    </div>
+  );
+}
+
+export default App;

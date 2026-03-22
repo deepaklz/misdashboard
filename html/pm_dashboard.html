@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NowPurchase · PM Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f0f2f5; --white:#ffffff; --surface:#f8f9fb;
+  --border:#e2e6ed; --border2:#d0d6e0;
+  --text:#1a1f2e; --text2:#4a5568; --muted:#8896ab;
+  --blue:#3b6cff; --blue-light:#ebefff; --blue-mid:#c7d2fe;
+  --green:#16a34a; --green-light:#dcfce7; --green-mid:#86efac;
+  --amber:#d97706; --amber-light:#fef3c7; --amber-mid:#fcd34d;
+  --red:#dc2626; --red-light:#fee2e2; --red-mid:#fca5a5;
+  --purple:#7c3aed; --purple-light:#ede9fe; --purple-mid:#c4b5fd;
+  --teal:#0d9488; --teal-light:#ccfbf1; --teal-mid:#5eead4;
+  --orange:#ea580c; --orange-light:#ffedd5;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.1);
+  --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  --radius:10px; --radius-sm:6px; --radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh;}
+
+/* ── HEADER ── */
+header{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:300;box-shadow:var(--shadow);}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;}
+.logo-name{font-size:15px;font-weight:700;color:var(--text);}
+.logo-name span{color:var(--blue);}
+.hdr-meta{display:flex;align-items:center;gap:12px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:var(--green-light);color:var(--green);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.9);}}
+.hdr-stat{font-size:11px;color:var(--muted);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;padding:0 24px;border-top:1px solid var(--border);}
+.tab{padding:10px 18px;background:transparent;border:none;border-bottom:3px solid transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all .18s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+
+/* ── MAIN ── */
+.main{padding:20px 24px;max-width:1440px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ── PAGE HEADER ── */
+.page-hdr{margin-bottom:20px;}
+.page-hdr h2{font-size:18px;font-weight:700;color:var(--text);}
+.page-hdr p{font-size:13px;color:var(--muted);margin-top:2px;}
+
+/* ── STAT CARDS ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.kpi-n{font-size:28px;font-weight:700;line-height:1;margin-bottom:3px;}
+.kpi-l{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.kpi-sub{font-size:11px;margin-top:4px;}
+
+/* ── CARDS GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+.card-body{padding:16px;}
+.chart-wrap{padding:16px;height:260px;position:relative;}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.flt{padding:5px 12px;background:var(--white);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;}
+.flt:hover{border-color:var(--blue);color:var(--blue);}
+.flt.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+/* ── SEARCH ── */
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;margin-bottom:14px;box-shadow:var(--shadow);}
+.search-wrap input{border:none;outline:none;font-family:var(--font);font-size:12px;color:var(--text);flex:1;background:transparent;}
+.search-wrap input::placeholder{color:var(--muted);}
+
+/* ── HIERARCHY ── */
+/* Epic */
+.epic-wrap{margin-bottom:16px;}
+.epic-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.epic-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;background:linear-gradient(90deg,var(--purple-light),var(--white));transition:background .2s;}
+.epic-hdr:hover{background:linear-gradient(90deg,var(--purple-mid),var(--blue-light));}
+.epic-icon{width:30px;height:30px;background:var(--purple);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;}
+.epic-info{flex:1;min-width:0;}
+.epic-key{font-family:var(--mono);font-size:10px;color:var(--purple);font-weight:600;margin-bottom:1px;}
+.epic-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.epic-desc{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.epic-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.epic-progress{text-align:right;}
+.epic-pct{font-size:18px;font-weight:700;color:var(--purple);}
+.epic-pct-label{font-size:10px;color:var(--muted);}
+.mini-progress{width:80px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px;}
+.mini-bar{height:100%;border-radius:3px;background:var(--purple);transition:width 1s ease;}
+.expand-btn{width:24px;height:24px;border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;background:var(--white);transition:transform .3s;}
+.epic-wrap.open .expand-btn{transform:rotate(180deg);}
+.epic-children{display:none;padding:0 12px 12px 12px;}
+.epic-wrap.open .epic-children{display:block;}
+
+/* Story / Task */
+.story-wrap{margin-top:8px;}
+.story-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:6px;}
+.story-hdr{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;cursor:pointer;}
+.story-hdr:hover{background:var(--blue-light);}
+.story-type-chip{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.type-story{background:var(--blue-light);color:var(--blue);}
+.type-task{background:var(--purple-light);color:var(--purple);}
+.type-bug{background:var(--red-light);color:var(--red);}
+.type-analysis{background:var(--amber-light);color:var(--amber);}
+.type-subtask{background:var(--teal-light);color:var(--teal);}
+.type-epic{background:var(--purple-light);color:var(--purple);}
+.story-body-wrap{flex:1;min-width:0;}
+.story-key{font-family:var(--mono);font-size:10px;color:var(--blue);font-weight:600;margin-bottom:2px;}
+.story-title{font-size:12px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:6px;}
+.story-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+.story-detail{display:none;padding:10px 12px;border-top:1px solid var(--border);background:var(--white);}
+.story-wrap.open .story-detail{display:block;}
+
+/* Subtask */
+.subtask-list{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;}
+.subtask-item{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;margin-bottom:4px;}
+.subtask-key{font-family:var(--mono);font-size:9px;color:var(--teal);font-weight:600;}
+.subtask-title{font-size:11px;color:var(--text2);flex:1;}
+
+/* Changelog timeline */
+.timeline{margin-top:12px;}
+.timeline-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.tl-item{display:flex;gap:10px;margin-bottom:8px;}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center;width:16px;flex-shrink:0;}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:4px;}
+.tl-line{width:1px;background:var(--border);flex:1;margin-top:3px;}
+.tl-content{flex:1;padding-bottom:6px;}
+.tl-event{font-size:11px;color:var(--text2);}
+.tl-event strong{color:var(--text);font-weight:600;}
+.tl-meta{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+
+/* Pills / badges */
+.pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.pill-backlog{background:#f1f5f9;color:#64748b;}
+.pill-progress{background:var(--blue-light);color:var(--blue);}
+.pill-review{background:var(--purple-light);color:var(--purple);}
+.pill-done{background:var(--green-light);color:var(--green);}
+.pill-dropped{background:var(--red-light);color:var(--red);}
+.pill-staging{background:var(--amber-light);color:var(--amber);}
+.pill-ready{background:var(--teal-light);color:var(--teal);}
+.pill-approval{background:var(--orange-light);color:var(--orange);}
+
+.tag{display:inline-flex;align-items:center;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid;}
+.tag-ai{color:#7c3aed;border-color:#c4b5fd;background:#f5f3ff;}
+.tag-eng{color:#2563eb;border-color:#bfdbfe;background:#eff6ff;}
+.tag-nwp{color:#0d9488;border-color:#99f6e4;background:#f0fdfa;}
+.tag-de{color:#d97706;border-color:#fcd34d;background:#fffbeb;}
+
+.avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;}
+
+.delay-warn{font-size:10px;color:var(--amber);background:var(--amber-light);padding:1px 6px;border-radius:4px;font-weight:600;}
+.delay-ok{font-size:10px;color:var(--green);}
+
+.pri-highest{color:var(--red);}
+.pri-high{color:var(--orange);}
+.pri-medium{color:var(--blue);}
+.pri-low{color:var(--muted);}
+
+/* ── CUSTOMER INSIGHT CARDS ── */
+.cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:20px;}
+.cust-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);overflow:hidden;}
+.cust-hdr{padding:16px 18px;background:linear-gradient(135deg,var(--blue-light),var(--purple-light));border-bottom:1px solid var(--border-2);}
+.cust-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.cust-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cust-body{padding:16px 18px;}
+.cust-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.cust-stat{text-align:center;padding:8px;background:var(--bg);border-radius:7px;}
+.cust-stat-n{font-size:20px;font-weight:700;line-height:1;}
+.cust-stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.completion-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.completion-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width 1.2s ease;}
+.eta-label{font-size:11px;color:var(--muted);}
+.eta-value{font-size:12px;font-weight:600;color:var(--text);}
+.board-row{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;}
+
+/* Sprint in/out chips */
+.sprint-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.sprint-in{background:var(--blue-light);color:var(--blue);}
+.sprint-out{background:#f1f5f9;color:var(--muted);}
+
+/* ── SPRINT BOARD ── */
+.board-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.board-col{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.board-col-hdr{padding:10px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid;display:flex;justify-content:space-between;align-items:center;}
+.board-col-body{padding:8px;min-height:200px;}
+.board-item{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.board-item:hover{box-shadow:var(--shadow-md);border-color:var(--blue-mid);}
+.board-item-key{font-family:var(--mono);font-size:9px;font-weight:600;margin-bottom:3px;}
+.board-item-title{font-size:11px;font-weight:500;line-height:1.3;color:var(--text);margin-bottom:6px;}
+.board-item-foot{display:flex;justify-content:space-between;align-items:center;}
+
+/* ── BUGS TAB ── */
+.bug-row{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;}
+.bug-row:last-child{border-bottom:none;}
+.bug-row:hover{background:var(--surface);}
+.bug-severity{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.bug-info{flex:1;}
+.bug-key{font-family:var(--mono);font-size:10px;color:var(--red);font-weight:600;margin-bottom:2px;}
+.bug-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:5px;}
+.bug-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.bug-status-col{width:140px;flex-shrink:0;}
+.bug-assignee-col{width:120px;flex-shrink:0;font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;}
+
+/* Bug severity colors */
+.sev-highest{background:var(--red);}
+.sev-high{background:var(--orange);}
+.sev-medium{background:var(--blue);}
+.sev-low{background:var(--muted);}
+
+/* ── TEAM TAB ── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.team-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);transition:box-shadow .2s;}
+.team-card:hover{box-shadow:var(--shadow-md);}
+.team-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;margin-bottom:10px;}
+
+/* Scrollable */
+.scrollable{max-height:500px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.scrollable::-webkit-scrollbar{width:4px;}
+.scrollable::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+@media(max-width:900px){
+  .g2,.g3,.board-grid{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+  .cust-grid{grid-template-columns:1fr;}
+}
+
+/* Frozen table headers */
+.freeze-hdr th {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--border);
+}
+.scrollable table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--border);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-top">
+    <div class="logo">
+      <div class="logo-icon">NP</div>
+      <div class="logo-name">Now<span>Purchase</span> · PM Command Centre</div>
+    </div>
+    <div class="hdr-meta">
+      <div class="live-badge"><span class="live-dot"></span>Live · nowpurchase.atlassian.net</div>
+      <span class="hdr-stat">4 Projects · 100 Issues · Sprint 2 Active · March 2026</span>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" onclick="switchTab('overview',this)">📊 Overview</button>
+    <button class="tab" onclick="switchTab('hierarchy',this)">🌲 Epics & Stories</button>
+    <button class="tab" onclick="switchTab('insights',this)">💡 Customer Insights</button>
+    <button class="tab" onclick="switchTab('sprint',this)">🏃 Sprint Board</button>
+    <button class="tab" onclick="switchTab('bugs',this)">🐛 Bug Tracker</button>
+    <button class="tab" onclick="switchTab('team',this)">👥 Team</button>
+    <button class="tab" onclick="switchTab('ceremony',this)">🎯 Sprint Ceremony</button>
+    <button class="tab" onclick="switchTab('storypoints',this)">⏱ Story Points</button>
+  </nav>
+</header>
+
+<div class="main">
+
+<!-- ══════════════ TAB 1: OVERVIEW ══════════════ -->
+<div id="tab-overview" class="panel active">
+  <div class="page-hdr"><h2>Project Overview</h2><p>Live snapshot across all 4 boards — AI, Engineering, Product, Design</p></div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-n" style="color:var(--blue)">100</div><div class="kpi-l">Total Issues</div><div class="kpi-sub" style="color:var(--muted)">All projects</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--purple)">10</div><div class="kpi-l">Epics</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--blue)">36</div><div class="kpi-l">Stories</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--teal)">11</div><div class="kpi-l">Tasks</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--teal)">30</div><div class="kpi-l">Sub-tasks</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--green)">37</div><div class="kpi-l">Done</div><div class="kpi-sub" style="color:var(--green)">37% complete</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--red)">11</div><div class="kpi-l">Bugs</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--amber)">27</div><div class="kpi-l">Unassigned</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span class="card-title">📦 Issues by Project</span></div>
+      <div class="chart-wrap"><canvas id="ov-proj"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🔄 Status Distribution</span></div>
+      <div class="chart-wrap"><canvas id="ov-status"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span class="card-title">🗂 Issue Type Mix</span></div>
+      <div class="chart-wrap"><canvas id="ov-type"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">👤 Top Assignees</span></div>
+      <div class="chart-wrap"><canvas id="ov-assignee"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 2: EPICS & STORIES HIERARCHY ══════════════ -->
+<div id="tab-hierarchy" class="panel">
+  <div class="page-hdr"><h2>Epic → Story → Task → Sub-task</h2><p>Drill into any card to see full lifecycle, movement history, and who worked on it</p></div>
+  <div class="filters" id="h-filters">
+    <button class="flt active" onclick="hFilter('all',this)">All Projects</button>
+    <button class="flt" onclick="hFilter('AI',this)">🤖 AI</button>
+    <button class="flt" onclick="hFilter('ENG',this)">⚙️ Engineering</button>
+    <button class="flt" onclick="hFilter('NWP',this)">📦 Product</button>
+    <button class="flt" onclick="hFilter('DE',this)">🎨 Design</button>
+    <button class="flt" onclick="hFilter('active',this)">🟢 Active</button>
+    <button class="flt" onclick="hFilter('done',this)">✅ Done</button>
+  </div>
+  <div class="search-wrap"><span style="color:var(--muted)">🔍</span><input type="text" id="h-search" placeholder="Search epics, stories, tasks…" oninput="hSearch(this.value)"></div>
+  <div id="hierarchy-root"></div>
+</div>
+
+<!-- ══════════════ TAB 3: CUSTOMER INSIGHTS ══════════════ -->
+<div id="tab-insights" class="panel">
+  <div class="page-hdr"><h2>Customer / Project Insights</h2><p>Track when each customer/product project will complete — sprint vs backlog breakdown, ETA, board involvement</p></div>
+  <div class="filters" id="ins-filters">
+    <button class="flt active" onclick="insFilter('all',this)">All</button>
+    <button class="flt" onclick="insFilter('customer',this)">🏭 Customers</button>
+    <button class="flt" onclick="insFilter('product',this)">💻 Products</button>
+    <button class="flt" onclick="insFilter('rd',this)">🔬 R&D</button>
+  </div>
+  <div id="insights-root" class="cust-grid"></div>
+</div>
+
+<!-- ══════════════ TAB 4: SPRINT BOARD ══════════════ -->
+<div id="tab-sprint" class="panel">
+  <div class="page-hdr"><h2>Sprint 2 · Active Board</h2><p>Current sprint work items — all boards combined</p></div>
+  <div class="board-grid" id="sprint-board"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span class="card-title">📈 Sprint Velocity</span></div>
+      <div class="chart-wrap"><canvas id="vel-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">📉 Burndown</span></div>
+      <div class="chart-wrap"><canvas id="burn-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 5: BUG TRACKER ══════════════ -->
+<div id="tab-bugs" class="panel">
+  <div class="page-hdr"><h2>Bug Tracker</h2><p>All bugs across projects — status, priority, assignee, and lifecycle movement</p></div>
+  <div class="kpi-row" style="grid-template-columns:repeat(6,1fr);">
+    <div class="kpi"><div class="kpi-n" style="color:var(--red)" id="bug-total">33</div><div class="kpi-l">Total Bugs</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--green)" id="bug-done">0</div><div class="kpi-l">Fixed</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--blue)" id="bug-prog">0</div><div class="kpi-l">In Progress</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--amber)" id="bug-rdy">0</div><div class="kpi-l">Ready for Rel.</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--muted)" id="bug-back">0</div><div class="kpi-l">Backlog</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--red)" id="bug-highest">0</div><div class="kpi-l">Highest Priority</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-head"><span class="card-title">🐛 Bugs by Project</span></div>
+      <div class="chart-wrap"><canvas id="bug-proj-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🔴 Bugs by Priority</span></div>
+      <div class="chart-wrap"><canvas id="bug-pri-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="filters" id="bug-filters">
+    <button class="flt active" onclick="bugFilter('all',this)">All</button>
+    <button class="flt" onclick="bugFilter('AI',this)">AI</button>
+    <button class="flt" onclick="bugFilter('ENG',this)">Engineering</button>
+    <button class="flt" onclick="bugFilter('NWP',this)">Product</button>
+    <button class="flt" onclick="bugFilter('open',this)">🔓 Open</button>
+    <button class="flt" onclick="bugFilter('done',this)">✅ Fixed</button>
+    <button class="flt" onclick="bugFilter('highest',this)">🔴 Critical</button>
+  </div>
+  <div class="card">
+    <div id="bug-list" class="scrollable"></div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 6: TEAM ══════════════ -->
+<div id="tab-team" class="panel">
+  <div class="page-hdr"><h2>Team Performance</h2><p>Workload, completion rate, and board involvement per team member</p></div>
+  <div id="team-root" class="team-grid"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><span class="card-title">📊 Issues Per Member</span></div>
+      <div class="chart-wrap"><canvas id="team-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🎯 Done vs Active vs Backlog</span></div>
+      <div class="chart-wrap"><canvas id="team-stack"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 7: SPRINT CEREMONY                         -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-ceremony" class="panel">
+  <div class="page-hdr"><h2>Sprint Ceremony</h2><p>Sprint-by-sprint narrative — achievements, performance, what worked, what didn't, and key takeaways per domain</p></div>
+
+  <!-- Sprint selector -->
+  <div class="filters" id="cer-filters" style="margin-bottom:20px;">
+    <button class="flt active" onclick="cerSwitch('sprint2',this)">🟢 Sprint 2 · Active</button>
+    <button class="flt" onclick="cerSwitch('sprint1',this)">✅ Sprint 1 · Closed</button>
+  </div>
+
+  <!-- Sprint 2 Panel -->
+  <div id="cer-sprint2">
+    <!-- Header banner -->
+    <div style="background:linear-gradient(135deg,#3b6cff,#7c3aed);border-radius:14px;padding:24px 28px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+      <div style="position:absolute;right:60px;bottom:-30px;width:80px;height:80px;background:rgba(255,255,255,.05);border-radius:50%;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Active Sprint</div>
+          <div style="font-size:28px;font-weight:800;margin-bottom:4px;">Sprint 2</div>
+          <div style="font-size:13px;opacity:.8;">Mar 11, 2026 → Mar 22, 2026 · 12-day sprint</div>
+          <div style="margin-top:10px;font-size:12px;opacity:.7;">4 Projects · AI, Engineering, Product, Design · Sprint 2 of Q1 2026</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;text-align:center;">
+          <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">100</div><div style="font-size:10px;opacity:.7;margin-top:2px">TOTAL ISSUES</div></div>
+          <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">37</div><div style="font-size:10px;opacity:.7;margin-top:2px">COMPLETED</div></div>
+          <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">37%</div><div style="font-size:10px;opacity:.7;margin-top:2px">VELOCITY</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-bottom:16px;">
+      <!-- Sprint Summary -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 Sprint Summary</span></div>
+        <div class="card-body">
+          <div style="line-height:1.8;color:var(--text2);font-size:13px;">
+            Sprint 2 is the second sprint of Q1 2026, running across all four boards — AI, Engineering, Product (NWP), and Design. The sprint carries <strong>100 issues</strong> with a strong emphasis on client deliveries (TRSL, Unimech, YMPL, Rausheena, NIPHA) alongside internal product work (NowPurchase Website, Safety Model R&D). Engineering leads in volume with <strong>36 issues</strong>, followed by Design at <strong>40</strong>, AI at <strong>15</strong>, and Product at <strong>9</strong>. As of today, <strong>37 issues are marked Done</strong>, with 8 in active progress and a significant portion still in Backlog or Ready states — indicating mid-sprint execution phase.
+          </div>
+        </div>
+      </div>
+      <!-- Achievements -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">🏆 Key Achievements</span></div>
+        <div class="card-body">
+          <div id="achievements-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-bottom:16px;">
+      <!-- What went well -->
+      <div class="card">
+        <div class="card-head" style="background:linear-gradient(90deg,#dcfce7,#fff)"><span class="card-title" style="color:var(--green)">✅ What Went Well</span></div>
+        <div class="card-body" id="went-well"></div>
+      </div>
+      <!-- What needs improvement -->
+      <div class="card">
+        <div class="card-head" style="background:linear-gradient(90deg,#fee2e2,#fff)"><span class="card-title" style="color:var(--red)">⚠️ What Needs Improvement</span></div>
+        <div class="card-body" id="needs-improvement"></div>
+      </div>
+    </div>
+
+    <!-- Domain-wise performance -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🏗 Domain Performance Breakdown</div>
+    <div class="g2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">⚙️ Engineering · Backend & Frontend</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px;">
+            <div class="kpi"><div class="kpi-n" style="color:var(--blue);font-size:22px">36</div><div class="kpi-l">Issues</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--green);font-size:22px">5</div><div class="kpi-l">Done</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--amber);font-size:22px">10</div><div class="kpi-l">Rdy Rel.</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--teal);font-size:22px">11</div><div class="kpi-l">ST Done</div></div>
+          </div>
+          <div id="eng-domain-notes"></div>
+          <div style="margin-top:10px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;">Backend Focus Areas</div>
+            <div id="eng-backend"></div>
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin:8px 0 6px;">Frontend Focus Areas</div>
+            <div id="eng-frontend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">🤖 AI · Research & Deployment</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;">
+            <div class="kpi"><div class="kpi-n" style="color:var(--purple);font-size:22px">15</div><div class="kpi-l">Issues</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--green);font-size:22px">7</div><div class="kpi-l">Done</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--blue);font-size:22px">3</div><div class="kpi-l">In Progress</div></div>
+          </div>
+          <div id="ai-domain-notes"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">🎨 Design</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px;">
+            <div class="kpi"><div class="kpi-n" style="color:var(--amber);font-size:22px">40</div><div class="kpi-l">Issues</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--green);font-size:22px">14</div><div class="kpi-l">Done</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--teal);font-size:22px">14</div><div class="kpi-l">Ready</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--blue);font-size:22px">4</div><div class="kpi-l">In Progress</div></div>
+          </div>
+          <div id="de-domain-notes"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📦 Product (NWP)</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;">
+            <div class="kpi"><div class="kpi-n" style="color:var(--teal);font-size:22px">9</div><div class="kpi-l">Issues</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--blue);font-size:22px">5</div><div class="kpi-l">In Exec.</div></div>
+            <div class="kpi"><div class="kpi-n" style="color:var(--amber);font-size:22px">1</div><div class="kpi-l">Dropped</div></div>
+          </div>
+          <div id="nwp-domain-notes"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Efficacy -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-head"><span class="card-title">👥 Team Efficacy & Performance</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">Completion Rate by Member</div>
+            <div id="efficacy-bars"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">Sprint 2 · Team Velocity Chart</div>
+            <div style="height:220px;position:relative"><canvas id="team-velocity-chart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Areas for Improvement -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-head"><span class="card-title">🔑 Key Areas for Improvement</span></div>
+      <div class="card-body" id="key-improvements"></div>
+    </div>
+  </div>
+
+  <!-- Sprint 1 Panel -->
+  <div id="cer-sprint1" style="display:none;">
+    <div style="background:linear-gradient(135deg,#16a34a,#0d9488);border-radius:14px;padding:24px 28px;color:#fff;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Closed Sprint</div>
+          <div style="font-size:28px;font-weight:800;margin-bottom:4px;">Sprint 1</div>
+          <div style="font-size:13px;opacity:.8;">Feb 24, 2026 → Mar 10, 2026 · 14-day sprint</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;text-align:center;">
+          <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">45</div><div style="font-size:10px;opacity:.7;margin-top:2px">TOTAL ISSUES</div></div>
+          <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">41</div><div style="font-size:10px;opacity:.7;margin-top:2px">COMPLETED</div></div>
+          <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:12px 16px;"><div style="font-size:26px;font-weight:800">91%</div><div style="font-size:10px;opacity:.7;margin-top:2px">VELOCITY</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 Sprint 1 Summary</span></div>
+        <div class="card-body">
+          <div style="line-height:1.8;color:var(--text2);font-size:13px;">Sprint 1 was the inaugural sprint of the new Jira workflow, focusing primarily on Engineering — bug fixes, TRSL V1 enhancements, DLMS refactoring, and technical debt reduction. The team delivered <strong>91% of committed issues</strong>, making it a strong foundation sprint. All major bug fixes were resolved within SLA, and the DLMS backend refactoring advanced significantly with 4 of 7 subtasks completed.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head" style="background:linear-gradient(90deg,#dcfce7,#fff)"><span class="card-title" style="color:var(--green)">✅ Sprint 1 Achievements</span></div>
+        <div class="card-body" id="s1-achievements"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-head" style="background:linear-gradient(90deg,#dcfce7,#fff)"><span class="card-title" style="color:var(--green)">✅ What Went Well</span></div>
+        <div class="card-body" id="s1-went-well"></div>
+      </div>
+      <div class="card">
+        <div class="card-head" style="background:linear-gradient(90deg,#fee2e2,#fff)"><span class="card-title" style="color:var(--red)">⚠️ What to Improve → Sprint 2</span></div>
+        <div class="card-body" id="s1-improve"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 8: STORY POINTS                            -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-storypoints" class="panel">
+  <div class="page-hdr">
+    <h2>Story Points Tracker</h2>
+    <p>1 Issue = 0.6 SP = 6 Hours · 0.1 SP = 1 Hour · Committed at sprint start vs delivered at sprint end · Per employee breakdown</p>
+  </div>
+
+  <!-- Sprint selector -->
+  <div class="filters" id="sp-filters" style="margin-bottom:20px;">
+    <button class="flt active" onclick="spSwitch('sprint2',this)">🟢 Sprint 2 · Active</button>
+    <button class="flt" onclick="spSwitch('sprint1',this)">✅ Sprint 1 · Closed</button>
+  </div>
+
+  <!-- Summary KPIs -->
+  <div id="sp-kpis" class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px;"></div>
+
+  <!-- Chart + Table split -->
+  <div class="g2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-head"><span class="card-title">📊 Committed vs Delivered · Per Person</span></div>
+      <div style="height:320px;position:relative;padding:16px;"><canvas id="sp-bar-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🎯 Delivery Rate · Per Person</span></div>
+      <div style="height:320px;position:relative;padding:16px;"><canvas id="sp-radar-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Full table -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-head"><span class="card-title">📋 Full Story Points Breakdown Table</span><span style="font-size:11px;color:var(--muted)">(0.6 SP per issue — standard convention)</span></div>
+    <div class="scrollable">
+      <table id="sp-table" style="width:100%;border-collapse:collapse;"></table>
+    </div>
+  </div>
+
+  <!-- Legend + explanation -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">ℹ️ Story Points Convention</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12px;">
+        <div style="background:var(--blue-light);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;color:var(--blue);margin-bottom:6px;">🎯 1 Issue = 0.6 SP = 6 Hours</div>
+          <div style="color:var(--text2);">Each issue = 0.6 SP = 6 hours of work. A 0.2 SP task = 2 hours. SP is proportional: every 0.1 SP = 1 hour of effort.</div>
+        </div>
+        <div style="background:var(--green-light);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;color:var(--green);margin-bottom:6px;">✅ Committed SP = Hours Planned</div>
+          <div style="color:var(--text2);">Committed SP = issues × 0.6. Multiply by 10 to get planned hours. E.g. 3.0 SP = 30 hours planned for the sprint.</div>
+        </div>
+        <div style="background:var(--purple-light);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;color:var(--purple);margin-bottom:6px;">📦 Delivered SP = Hours Completed</div>
+          <div style="color:var(--text2);">Delivered SP = Done issues × 0.6. Multiply by 10 for completed hours. Delivery rate = Delivered ÷ Committed × 100%.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+
+// ══ CHART DEFAULTS (must be first) ══
+Chart.defaults.color='#8896ab'; Chart.defaults.borderColor='#e2e6ed'; Chart.defaults.font.family="'Inter',sans-serif"; Chart.defaults.font.size=10;
+
+// Smart label: keep "Deepak S", "Deepak B" etc. intact; abbreviate long names
+const shortLabel = n => {
+  const p = n.split(' ');
+  if(p.length >= 2 && p[1].length <= 2) return n; // "Deepak S", "Deepak B"
+  return p[0]; // "Pratyush", "Monish" etc
+};
+
+
+// ══ SECTION A: CEREMONY + STORY POINTS ══
+
+// ══ CEREMONY DATA ══
+function cerSwitch(id, btn) {
+  document.getElementById('cer-sprint2').style.display = id==='sprint2'?'block':'none';
+  document.getElementById('cer-sprint1').style.display = id==='sprint1'?'block':'none';
+  document.querySelectorAll('#cer-filters .flt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function achievementItem(icon, text) {
+  return `<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);"><span style="font-size:14px;flex-shrink:0">${icon}</span><div style="font-size:12px;color:var(--text2);line-height:1.5">${text}</div></div>`;
+}
+
+function bulletPoint(color, text) {
+  return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;"><div style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px"></div><div style="font-size:12px;color:var(--text2);line-height:1.5">${text}</div></div>`;
+}
+
+// Sprint 2 ceremony content
+document.getElementById('achievements-list').innerHTML = [
+  achievementItem('🚀', 'YMPL v2.0 — API fixes for heat grouping and tapping are in Internal Review (AI-100). Safety monitoring Part 2 active (AI-98).'),
+  achievementItem('🔧', 'DLMS Folder Structure Refactor at Staging Testing — 4 of 7 subtasks completed (ENG-199). DLMS Auth Refactor also at Staging (ENG-197).'),
+  achievementItem('🎨', 'Unimech DLMS Design Update progressing — site visit done, system access complete, designs updated (DE-156, DE-153, DE-132).'),
+  achievementItem('✅', 'TRSL V1 Enhancements: Moulding Quality mobile interface Ready for Release (ENG-129), Nomenclature change ready (ENG-147).'),
+  achievementItem('📊', 'YMPL post-implementation monitoring — 3 stories completed by Ujjal Saha (AI-96, AI-97, AI-66).'),
+  achievementItem('🐛', 'Multiple critical bugs resolved — JMT Chemistry, Login scroll, Rausheena sample tagging, Spectro files (ENG-261, ENG-271, ENG-274).'),
+  achievementItem('🎨', 'Design board delivered 14 stories Done — Rail Expo, Sales Collaterals, Graphic work, Sprint Planning all complete.'),
+].join('');
+
+document.getElementById('went-well').innerHTML = [
+  bulletPoint('#16a34a','Design team velocity is highest this sprint — 14 Done + 14 Ready showing strong execution by Sayan, Umang, and Shaiza.'),
+  bulletPoint('#16a34a','AI team resolved YMPL critical issues rapidly — heat grouping bug and tap-to-tap threshold calibration completed within 48 hours.'),
+  bulletPoint('#16a34a','Bug resolution in Engineering was swift — 6 bugs resolved in the past 5 days across spectro, login, and chemistry modules.'),
+  bulletPoint('#16a34a','Cross-board collaboration visible — Design ↔ Engineering ↔ Product working together on Unimech DLMS (DE-127 epic spans all boards).'),
+  bulletPoint('#16a34a','Deepak S completed 100% of his committed subtasks (5/5 Done). Anish Kumar closed 2 of 5 with 2 more at Ready/Staging.'),
+].join('');
+
+document.getElementById('needs-improvement').innerHTML = [
+  bulletPoint('#dc2626','27 issues remain Unassigned — this is a significant accountability gap. Product and Engineering backlogs need immediate owner assignment.'),
+  bulletPoint('#dc2626','Thotreichan Shaiza has 5 issues in "Ready" state — potential bottleneck waiting for review/approval before sprint end.'),
+  bulletPoint('#dc2626','Deepak B (NWP) has 0 Done out of 6 committed — 3 in execution but 3 still in backlog. High risk of carry-over.'),
+  bulletPoint('#dc2626','abhishekshaw has 10 issues with only 3 Done — 4 in WIP, 3 in backlog. May need sprint scope reduction next sprint.'),
+  bulletPoint('#dc2626','TRSL monitoring story (AI-48) still in Backlog since Feb 24 — earliest created issue, needs prioritization or de-scoping.'),
+  bulletPoint('#dc2626','ENG has 3 issues still in "Staging Testing" near sprint end — risk of missing release window for Sprint 2.'),
+].join('');
+
+// Engineering domain
+document.getElementById('eng-domain-notes').innerHTML = `<div style="background:var(--blue-light);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:4px;">Engineering is the highest-volume board with 36 issues. <strong>11 SubTask Done</strong> signals strong backend execution. <strong>10 items at Ready for Release</strong> are awaiting deployment go/no-go — this is a positive sign for release readiness but needs PM sign-off.</div>`;
+document.getElementById('eng-backend').innerHTML = [
+  bulletPoint('#3b6cff','DLMS Folder Structure Refactor (ENG-199) — 4/7 subtasks done, at Staging Testing. Swapnamoy Naha leading.'),
+  bulletPoint('#3b6cff','DLMS Auth Refactor (ENG-197) — Staging Testing. 1 subtask still in backlog (DLMS Auth FE Changes).'),
+  bulletPoint('#3b6cff','Multi-Tapping Heat Cycle Fix (ENG-285) — Backend POST API changes, still in backlog. Needs attention.'),
+].join('');
+document.getElementById('eng-frontend').innerHTML = [
+  bulletPoint('#7c3aed','Moulding Quality Mobile Interface (ENG-129) — Ready for Release. Anish Kumar. 1 subtask done.'),
+  bulletPoint('#7c3aed','Remove A/B Testing from NowPurchase Website (ENG-208) — Ready for Release. Mansi Dixit.'),
+  bulletPoint('#7c3aed','JMT Chemistry Bug fix (ENG-261) — Ready for Release. Quick turnaround by abhishekshaw.'),
+].join('');
+
+// AI domain
+document.getElementById('ai-domain-notes').innerHTML = `<div style="background:var(--purple-light);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:8px;">AI board performed strongly — 7 of 15 issues Done. Key wins: YMPL post-monitoring stories complete, Safety Model experimentation active, R&D scoping done.</div>` + [
+  bulletPoint('#7c3aed','YMPL v2.0 (AI-99 epic) — API heat grouping fix in Int Review. Safety flagging bug in progress by Monish.'),
+  bulletPoint('#7c3aed','Safety Model (AI-69 epic) — RF-DETR PPE experiment in progress (Soumyadip). Jetson benchmarking in backlog.'),
+  bulletPoint('#7c3aed','R&D (AI-13 epic) — Microstructure analyzer scoped (Done). Video footages upload still in backlog.'),
+  bulletPoint('#7c3aed','Post-implementation monitoring — Ujjal Saha delivered 3 YMPL stories this sprint. TRSL monitoring still pending.'),
+].join('');
+
+// Design domain
+document.getElementById('de-domain-notes').innerHTML = `<div style="background:var(--amber-light);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:8px;">Design is the top-performing board by delivery count — 14 Done, 14 in Ready state. Sayan Majumder and Umang Singh are the primary contributors.</div>` + [
+  bulletPoint('#d97706','Unimech DLMS Design (DE-127 epic) — Site visit done, system access complete, designs updated & in review.'),
+  bulletPoint('#d97706','MetalCloud Video (DE-129 epic) — 2 stories in Ready, awaiting Purvi alignment before publish.'),
+  bulletPoint('#d97706','NP Website Timeline (DE-128 epic) — Design in progress by Umang Singh. 1 story active.'),
+  bulletPoint('#d97706','Rail Expo Event (DE-28 epic) — IRCE creative, MC Video, Ankan PPT all Done.'),
+].join('');
+
+// NWP domain
+document.getElementById('nwp-domain-notes').innerHTML = `<div style="background:var(--teal-light);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:8px;">Product board is primarily client-facing — all 5 active stories are in execution mode. 1 story was dropped (Rausheena grade tagging). No stories in Done yet from NWP this sprint.</div>` + [
+  bulletPoint('#0d9488','Unimech Logsheet Digitization (NWP-46, NWP-59) — in execution. FRD creation for tech team started.'),
+  bulletPoint('#0d9488','Rausheena spectro sequence (NWP-56, NWP-36) — in execution and backlog. Chemistry sequence fix underway.'),
+  bulletPoint('#0d9488','NIPHA, Yash Metallics — in active execution by Manhar Bhardwaj and Monish Kumar V R.'),
+  bulletPoint('#dc2626','Risk: No NWP stories completed yet. All in execution or backlog — delivery risk for sprint end.'),
+].join('');
+
+// Efficacy bars
+const efficacyData = [
+  {name:'Deepak S',done:5,total:5,color:'#16a34a'},
+  {name:'Ayus Das',done:1,total:1,color:'#16a34a'},
+  {name:'Pratyush Prakash',done:2,total:3,color:'#16a34a'},
+  {name:'Sayan Majumder',done:7,total:17,color:'#3b6cff'},
+  {name:'Umang Singh',done:6,total:14,color:'#3b6cff'},
+  {name:'Ujjal Saha',done:3,total:5,color:'#0d9488'},
+  {name:'Anish Kumar',done:2,total:5,color:'#d97706'},
+  {name:'Manhar Bhardwaj',done:2,total:4,color:'#d97706'},
+  {name:'abhishekshaw',done:3,total:10,color:'#d97706'},
+  {name:'Monish Kumar V R',done:2,total:6,color:'#d97706'},
+  {name:'Mansi Dixit',done:1,total:3,color:'#ea580c'},
+  {name:'Swapnamoy Naha',done:1,total:4,color:'#ea580c'},
+  {name:'Soumyadip B.',done:1,total:4,color:'#ea580c'},
+  {name:'Deepak B',done:0,total:6,color:'#dc2626'},
+  {name:'Thotreichan Shaiza',done:1,total:9,color:'#dc2626'},
+].sort((a,b)=>b.done/b.total - a.done/a.total);
+
+const barsEl = document.getElementById('efficacy-bars');
+efficacyData.forEach(e => {
+  const pct = Math.round(e.done/e.total*100);
+  barsEl.innerHTML += `<div style="margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+      <span style="color:var(--text2);font-weight:500">${e.name}</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:${e.color};font-weight:600">${e.done}/${e.total} · ${pct}%</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+      <div style="height:100%;width:${pct}%;background:${e.color};border-radius:3px;transition:width 1s ease;"></div>
+    </div>
+  </div>`;
+});
+
+// Team velocity chart (ceremony)
+new Chart(document.getElementById('team-velocity-chart'),{
+  type:'bar',
+  data:{
+    labels:efficacyData.slice(0,10).map(e=>shortLabel(e.name)),
+    datasets:[
+      {label:'Committed',data:efficacyData.slice(0,10).map(e=>e.total),backgroundColor:'rgba(59,108,255,.15)',borderColor:'rgba(59,108,255,.5)',borderWidth:1,borderRadius:3},
+      {label:'Done',data:efficacyData.slice(0,10).map(e=>e.done),backgroundColor:efficacyData.slice(0,10).map(e=>e.color+'cc'),borderRadius:3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:8}}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}
+});
+
+// Key improvements
+document.getElementById('key-improvements').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">` + [
+  {n:'1',title:'Reduce Unassigned Issues',desc:'27 issues (27%) have no owner. Before next sprint planning, all backlog items must be assigned to specific team members.',c:'#dc2626'},
+  {n:'2',title:'Mid-Sprint Progress Check',desc:'Implement a day-6 sync to identify blockers early. 3 ENG issues at Staging Testing risk not releasing before sprint end.',c:'#d97706'},
+  {n:'3',title:'NWP Delivery Gap',desc:'Product board has 0 stories Done. Deepak B has 6 committed with 0 done. Scope needs to be tightened or redistributed.',c:'#dc2626'},
+  {n:'4',title:'TRSL AI Monitoring Backlog',desc:'AI-48 (TRSL pouring analysis) has been open since Feb 24. Needs to either enter next sprint active queue or be explicitly deferred.',c:'#ea580c'},
+  {n:'5',title:'Design Ready → Done Pipeline',desc:'14 stories are in "Ready" state — pending review or approval. Define a clearer review process to unblock these.',c:'#d97706'},
+  {n:'6',title:'Story Point Calibration',desc:'Introduce formal SP estimation next sprint. Currently using 0.6 SP/issue — consider effort-based scoring for accuracy.',c:'#3b6cff'},
+].map(i=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid ${i.c}">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+    <div style="width:22px;height:22px;border-radius:5px;background:${i.c};color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">${i.n}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text)">${i.title}</div>
+  </div>
+  <div style="font-size:11px;color:var(--text2);line-height:1.5">${i.desc}</div>
+</div>`).join('') + `</div>`;
+
+// Sprint 1 content
+document.getElementById('s1-achievements').innerHTML = [
+  achievementItem('🔧','DLMS Folder Structure Refactor — Swapnamoy Naha. First 4 backend subtasks all completed within sprint.'),
+  achievementItem('🐛','Critical bug fixes resolved: PDF generation, peer dependency, IoT spectro connectivity, meltlogsheet step validation.'),
+  achievementItem('🚀','TRSL V1 Enhancements kicked off — inward inspection, nomenclature changes, moulding quality all initiated.'),
+  achievementItem('✅','Technical Debt Reduction epic progressed — sourcemap fix, Agnipariksha font fix, peer dependency issues resolved.'),
+  achievementItem('👥','All 11 active team members completed at least 1 issue. Manhar Bhardwaj led with 7 issues fully delivered.'),
+].join('');
+document.getElementById('s1-went-well').innerHTML = [
+  bulletPoint('#16a34a','91% delivery rate — strongest sprint velocity achieved to date. Strong planning and execution.'),
+  bulletPoint('#16a34a','Bug fix turnaround was excellent — most critical bugs (Highest priority) resolved within 2-3 days of creation.'),
+  bulletPoint('#16a34a','Engineering team was focused — no scope creep. Every committed issue was tracked to Done or in clear progress.'),
+  bulletPoint('#16a34a','Manhar Bhardwaj delivered 100% (7/7). Anish Kumar 100% (5/5). Monish Kumar V R 100% (5/5).'),
+].join('');
+document.getElementById('s1-improve').innerHTML = [
+  bulletPoint('#dc2626','Ujjal Saha delivered only 1/4 — TRSL monitoring analysis needs clearer scoping before committing to sprint.'),
+  bulletPoint('#dc2626','Design board was not yet onboarded — led to sprint 2 having a large Design load without ceremony baseline.'),
+  bulletPoint('#dc2626','No Product (NWP) stories were formally tracked in Sprint 1 — needs integration in Sprint 2 onwards.'),
+  bulletPoint('#d97706','Sprint was Engineering-only — future sprints should include all 4 boards for holistic tracking.'),
+].join('');
+
+// ══ STORY POINTS DATA ══
+const SP_RATE = 0.6;
+
+const sprint2Data = [
+  {name:'Sayan Majumder',proj:'DE',committed:17,done:7,inprog:2,backlog:8},
+  {name:'Umang Singh',proj:'DE',committed:14,done:6,inprog:3,backlog:5},
+  {name:'abhishekshaw',proj:'ENG',committed:10,done:3,inprog:4,backlog:3},
+  {name:'Thotreichan Shaiza',proj:'DE',committed:9,done:1,inprog:2,backlog:6},
+  {name:'Deepak B',proj:'NWP',committed:6,done:0,inprog:3,backlog:3},
+  {name:'Monish Kumar V R',proj:'AI',committed:6,done:2,inprog:3,backlog:1},
+  {name:'Anish Kumar',proj:'ENG',committed:5,done:2,inprog:2,backlog:1},
+  {name:'Ujjal Saha',proj:'AI',committed:5,done:3,inprog:1,backlog:1},
+  {name:'Deepak S',proj:'ENG',committed:5,done:5,inprog:0,backlog:0},
+  {name:'Soumyadip Bhattacharyya',proj:'AI',committed:4,done:1,inprog:1,backlog:2},
+  {name:'Swapnamoy Naha',proj:'ENG',committed:4,done:1,inprog:2,backlog:1},
+  {name:'Manhar Bhardwaj',proj:'ENG',committed:4,done:2,inprog:2,backlog:0},
+  {name:'Mansi Dixit',proj:'ENG',committed:3,done:1,inprog:2,backlog:0},
+  {name:'Pratyush Prakash',proj:'ENG',committed:3,done:2,inprog:1,backlog:0},
+  {name:'Vaskar Chandra Das',proj:'ENG',committed:2,done:0,inprog:1,backlog:1},
+  {name:'Ayus Das',proj:'AI',committed:1,done:1,inprog:0,backlog:0},
+  {name:'Ankit Anurag',proj:'ENG',committed:1,done:0,inprog:1,backlog:0},
+];
+
+const sprint1Data = [
+  {name:'Manhar Bhardwaj',proj:'ENG',committed:7,done:7,inprog:0,backlog:0},
+  {name:'Anish Kumar',proj:'ENG',committed:5,done:5,inprog:0,backlog:0},
+  {name:'Monish Kumar V R',proj:'AI',committed:5,done:5,inprog:0,backlog:0},
+  {name:'Pratyush Prakash',proj:'ENG',committed:5,done:5,inprog:0,backlog:0},
+  {name:'Ankit Kumar',proj:'ENG',committed:6,done:6,inprog:0,backlog:0},
+  {name:'Ujjal Saha',proj:'AI',committed:4,done:1,inprog:0,backlog:3},
+  {name:'Swapnamoy Naha',proj:'ENG',committed:3,done:3,inprog:0,backlog:0},
+  {name:'Vaskar Chandra Das',proj:'ENG',committed:3,done:3,inprog:0,backlog:0},
+  {name:'abhishekshaw',proj:'ENG',committed:3,done:3,inprog:0,backlog:0},
+  {name:'Mansi Dixit',proj:'ENG',committed:1,done:1,inprog:0,backlog:0},
+  {name:'Ayus Das',proj:'AI',committed:2,done:0,inprog:0,backlog:2},
+  {name:'Abhay kumar',proj:'ENG',committed:1,done:1,inprog:0,backlog:0},
+];
+
+let spActiveSprint = 'sprint2';
+let spChartBar, spChartRadar;
+
+function spSwitch(id, btn) {
+  spActiveSprint = id;
+  document.querySelectorAll('#sp-filters .flt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSP();
+}
+
+const projColor2 = p => ({ENG:'#3b6cff',AI:'#7c3aed',NWP:'#0d9488',DE:'#d97706'}[p]||'#3b6cff');
+
+function renderSP() {
+  const data = spActiveSprint === 'sprint2' ? sprint2Data : sprint1Data;
+  const sprintLabel = spActiveSprint === 'sprint2' ? 'Sprint 2 (Active · Mar 11–22, 2026)' : 'Sprint 1 (Closed · Feb 24–Mar 10, 2026)';
+  
+  const totalCommitted = data.reduce((s,e)=>s+e.committed,0);
+  const totalDone = data.reduce((s,e)=>s+e.done,0);
+  const totalWIP = data.reduce((s,e)=>s+e.inprog,0);
+  const commitSP = +(totalCommitted * SP_RATE).toFixed(1);
+  const delivSP = +(totalDone * SP_RATE).toFixed(1);
+  const rate = Math.round(totalDone/totalCommitted*100);
+  
+  document.getElementById('sp-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-n" style="color:var(--blue)">${totalCommitted}</div><div class="kpi-l">Issues Committed</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--blue)">${commitSP}</div><div class="kpi-l">Total SP Committed</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--green)">${totalDone}</div><div class="kpi-l">Issues Delivered</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:var(--green)">${delivSP}</div><div class="kpi-l">SP Delivered</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:${rate>=80?'var(--green)':rate>=50?'var(--amber)':'var(--red)'}">${rate}%</div><div class="kpi-l">Delivery Rate</div></div>
+  `;
+
+  // Sorted by committed desc
+  const sorted = [...data].sort((a,b)=>b.committed-a.committed);
+  
+  // Bar chart
+  if(spChartBar) spChartBar.destroy();
+  spChartBar = new Chart(document.getElementById('sp-bar-chart'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(e=>shortLabel(e.name)),
+      datasets:[
+        {label:'Committed SP',data:sorted.map(e=>+(e.committed*SP_RATE).toFixed(1)),backgroundColor:'rgba(59,108,255,.2)',borderColor:'#3b6cff',borderWidth:1.5,borderRadius:3},
+        {label:'Delivered SP',data:sorted.map(e=>+(e.done*SP_RATE).toFixed(1)),backgroundColor:sorted.map(e=>{const r=e.done/e.committed; return r>=0.8?'#16a34a':r>=0.5?'#d97706':'#dc2626';}),borderRadius:3}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:8}}},
+      scales:{x:{grid:{display:false}},y:{title:{display:true,text:'Story Points (SP)'},grid:{color:'#f1f5f9'}}}}
+  });
+
+  // Radar chart (delivery rates)
+  const top8 = [...data].sort((a,b)=>b.committed-a.committed).slice(0,8);
+  if(spChartRadar) spChartRadar.destroy();
+  spChartRadar = new Chart(document.getElementById('sp-radar-chart'),{
+    type:'radar',
+    data:{
+      labels:top8.map(e=>shortLabel(e.name)),
+      datasets:[
+        {label:'Delivery %',data:top8.map(e=>Math.round(e.done/e.committed*100)),backgroundColor:'rgba(59,108,255,.1)',borderColor:'#3b6cff',pointBackgroundColor:'#3b6cff'},
+        {label:'Target (80%)',data:top8.map(()=>80),backgroundColor:'rgba(22,163,74,.06)',borderColor:'rgba(22,163,74,.4)',borderDash:[4,4],pointRadius:0}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:8}}},
+      scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20},grid:{color:'#e2e6ed'},pointLabels:{color:'#4a5568'}}}}
+  });
+
+  // Full table
+  const delivColor = r => r>=80?'#16a34a':r>=50?'#d97706':'#dc2626';
+  const ratingLabel = r => r>=80?'🟢 On Track':r>=50?'🟡 At Risk':'🔴 Behind';
+  document.getElementById('sp-table').innerHTML = `
+    <thead style="background:var(--bg);">
+      <tr>
+        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Team Member</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Board</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Issues Committed</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">SP Committed</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Hours Planned</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Issues Done</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">SP Delivered</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Hours Done</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">In Progress</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Backlog</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Delivery %</th>
+        <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Status</th>
+        <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border)">Progress</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${sorted.map((e,i) => {
+        const rate2 = Math.round(e.done/e.committed*100);
+        const commitSP2 = +(e.committed*SP_RATE).toFixed(1);
+        const delivSP2 = +(e.done*SP_RATE).toFixed(1);
+        return `<tr style="border-bottom:1px solid var(--border);${i%2===1?'background:var(--surface)':''}">
+          <td style="padding:10px 14px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:${projColor2(e.proj)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${e.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--text)">${e.name}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:10px 14px;text-align:center"><span class="tag tag-${e.proj.toLowerCase()}">${e.proj}</span></td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600">${e.committed}</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue)">${commitSP2} SP</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">${+(commitSP2*10).toFixed(0)}h</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600">${e.done}</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${delivColor(rate2)}">${delivSP2} SP</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:${delivColor(rate2)}">${+(delivSP2*10).toFixed(0)}h</td>
+          <td style="padding:10px 14px;text-align:center;font-size:12px;color:var(--blue)">${e.inprog}</td>
+          <td style="padding:10px 14px;text-align:center;font-size:12px;color:var(--muted)">${e.backlog}</td>
+          <td style="padding:10px 14px;text-align:center;font-size:14px;font-weight:700;color:${delivColor(rate2)}">${rate2}%</td>
+          <td style="padding:10px 14px;text-align:center;font-size:12px">${ratingLabel(rate2)}</td>
+          <td style="padding:10px 14px;min-width:100px;">
+            <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${rate2}%;background:${delivColor(rate2)};border-radius:3px;"></div>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+      <tr style="background:linear-gradient(90deg,var(--blue-light),var(--white));font-weight:700;border-top:2px solid var(--border);">
+        <td style="padding:10px 14px;font-size:12px;font-weight:700">TOTAL</td>
+        <td style="padding:10px 14px;text-align:center">—</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue)">${totalCommitted}</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--blue)">${commitSP} SP</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${+(commitSP*10).toFixed(0)}h</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--green)">${totalDone}</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">${delivSP} SP</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green)">${+(delivSP*10).toFixed(0)}h</td>
+        <td style="padding:10px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--blue)">${totalWIP}</td>
+        <td style="padding:10px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--muted)">${data.reduce((s,e)=>s+e.backlog,0)}</td>
+        <td style="padding:10px 14px;text-align:center;font-size:14px;font-weight:800;color:${rate>=80?'var(--green)':rate>=50?'var(--amber)':'var(--red)'}">${rate}%</td>
+        <td colspan="2" style="padding:10px 14px;font-size:12px;font-weight:600;color:${rate>=80?'var(--green)':rate>=50?'var(--amber)':'var(--red)'}">${ratingLabel(rate)}</td>
+      </tr>
+    </tbody>`;
+}
+
+// ══ SECTION B: DATA + ORIGINAL DASHBOARD ══
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+const ALL_ISSUES = [{"key":"NWP-63","id":"11600","type":"Story","summary":"When Data team is sending EAF heat details message to Client, it should be sent automatically instead of manual intervention","status":"Backlog","statusCat":"To Do","assignee":"Unassigned","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":""},{"key":"ENG-287","id":"11601","type":"Task","summary":"NIPHA MTC ENHANCEMENTS","status":"Backlog","statusCat":"To Do","assignee":"Vaskar Chandra Das","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-62","id":"11599","type":"Analysis","summary":"NIPHA TC Enhancement In Hardness field","status":"Backlog","statusCat":"To Do","assignee":"Unassigned","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":""},{"key":"AI-70","id":"11173","type":"Story","summary":"AI Powered Material Microstructure Analyzer Early Prototype","status":"Backlog","statusCat":"To Do","assignee":"Monish Kumar V R","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-13","parentSummary":"R&D","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-61","id":"11598","type":"Analysis","summary":"AI microstructure analyzer and property predictor","status":"Backlog","statusCat":"To Do","assignee":"Rohit Kumar","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":""},{"key":"AI-63","id":"11120","type":"Story","summary":"Scope out AI Powered Material Microstructure Analyzer","status":"Done","statusCat":"Done","assignee":"Monish Kumar V R","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-13","parentSummary":"R&D","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-286","id":"11597","type":"Story","summary":"Currently When Rausheena Users are taking spectro samples, the chemistry does not appear in proper sequence","status":"Backlog","statusCat":"To Do","assignee":"Anish Kumar","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-56","id":"11519","type":"Story","summary":"When Rausheena Users are taking spectro samples, the chemistry does not appear in proper sequence","status":"Story: In Execution","statusCat":"In Progress","assignee":"Deepak B","created":"2026-03-17","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-60","id":"11596","type":"Story","summary":"Line up Calls with the Client QA for Sand preparation","status":"Story: In Execution","statusCat":"In Progress","assignee":"Deepak B","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-30","id":"11240","type":"Analysis","summary":"Validation of Sand parameters forecasting model: Saikata","status":"Backlog","statusCat":"To Do","assignee":"Deepak B","created":"2026-03-11","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-57","id":"11547","type":"Story","summary":"When Rausheena user are tagging the grade as per the code, it is getting incorrectly tagged","status":"Dropped","statusCat":"Done","assignee":"Unassigned","created":"2026-03-17","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-58","id":"11593","type":"Story","summary":"Anydesk with Nipha Tensile","status":"Story: In Execution","statusCat":"In Progress","assignee":"Manhar Bhardwaj","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-31","id":"11245","type":"Story","summary":"Yash Metallics AI vision- Some incorrect flagging in safety shield & incorrect tagging in tap to tap time","status":"Story: In Execution","statusCat":"In Progress","assignee":"Monish Kumar V R","created":"2026-03-12","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-59","id":"11595","type":"Story","summary":"Unimech Logsheet Digitization- Create FRD for the tech","status":"Story Backlog","statusCat":"To Do","assignee":"Deepak B","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-36","id":"11324","type":"Story","summary":"Rausheena User want the Spectrometer WhatsApp chemistry reading in a standard sequence","status":"Story Backlog","statusCat":"To Do","assignee":"Deepak B","created":"2026-03-13","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"NWP-46","id":"11454","type":"Story","summary":"Unimech Log Sheet Digitization","status":"Story: In Execution","statusCat":"In Progress","assignee":"Deepak B","created":"2026-03-16","updated":"2026-03-18","priority":"Medium","project":"NWP","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-156","id":"11473","type":"Story","summary":"Update Unimech Designs","status":"Int Review","statusCat":"In Progress","assignee":"Sayan Majumder","created":"2026-03-16","updated":"2026-03-18","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-91","id":"11515","type":"Bug","summary":"Yash Metallics AI vision- Some incorrect flagging in safety shield & incorrect tagging in tap to tap time","status":"In Progress","statusCat":"In Progress","assignee":"Monish Kumar V R","created":"2026-03-17","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-99","parentSummary":"YMPL v2.0","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-96","id":"11550","type":"Story","summary":"Post implementation monitoring YMPL (Part_2)","status":"Done","statusCat":"Done","assignee":"Ujjal Saha","created":"2026-03-17","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-14","parentSummary":"Post implementation monitoring of Pouring - YMPL","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-198","id":"11102","type":"Sub-task","summary":"DLMS Auth FE Changes","status":"SubTask Backlog","statusCat":"To Do","assignee":"abhishekshaw","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"ENG-197","parentSummary":"DLMS-Auth Refactor","parentType":"Story","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-89","id":"11471","type":"Story","summary":"Upload all the video footages of various foundries in np-ml-cv-3 bucket","status":"Backlog","statusCat":"To Do","assignee":"Monish Kumar V R","created":"2026-03-16","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-13","parentSummary":"R&D","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-100","id":"11590","type":"Story","summary":"API changes to fix heat grouping issues for tapping","status":"Int Review","statusCat":"In Progress","assignee":"Monish Kumar V R","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-99","parentSummary":"YMPL v2.0","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-87","id":"11444","type":"Bug","summary":"calibrate and test ympl tap to tap thresholds on deepstream setup","status":"Done","statusCat":"Done","assignee":"Ayus Das","created":"2026-03-16","updated":"2026-03-18","priority":"Highest","project":"AI","parentKey":"AI-99","parentSummary":"YMPL v2.0","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-231","id":"11263","type":"Sub-task","summary":"Testing","status":"SubTask In Progress","statusCat":"In Progress","assignee":"Ankit Anurag","created":"2026-03-12","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"ENG-218","parentSummary":"NIPHA TC Enhancement","parentType":"Task","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-267","id":"11459","type":"Bug","summary":"Shanti Foumach Bug","status":"Backlog","statusCat":"To Do","assignee":"abhishekshaw","created":"2026-03-16","updated":"2026-03-18","priority":"High","project":"ENG","parentKey":"NWP-48","parentSummary":"Shanti Foumach","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-268","id":"11461","type":"Story","summary":"Shanti Foumach Enhancement","status":"Backlog","statusCat":"To Do","assignee":"abhishekshaw","created":"2026-03-16","updated":"2026-03-18","priority":"High","project":"ENG","parentKey":"NWP-48","parentSummary":"Shanti Foumach","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-174","id":"10850","type":"Bug","summary":"Attached Images in Inward Inpsection is not visible after opening the preview of Inward Inspection","status":"Ready for Release","statusCat":"In Progress","assignee":"Vaskar Chandra Das","created":"2026-03-09","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-285","id":"11587","type":"Story","summary":"Multi-Tapping Heat Cycle Fix - Backend melting POST API changes","status":"Backlog","statusCat":"To Do","assignee":"Swapnamoy Naha","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":""},{"key":"ENG-237","id":"11275","type":"Sub-task","summary":"Test npm installation process after dependency changes","status":"SubTask Done","statusCat":"Done","assignee":"abhishekshaw","created":"2026-03-12","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"ENG-170","parentSummary":"fixed peer dependency issue - meltlogsheetapp","parentType":"Bug","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-170","id":"10423","type":"Bug","summary":"fixed peer dependency issue - meltlogsheetapp","status":"Ready for Release","statusCat":"In Progress","assignee":"abhishekshaw","created":"2026-02-24","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[{"key":"ENG-237","summary":"Test npm installation process after dependency changes","status":"SubTask Done"}],"labels":[],"sprint":"Sprint 2"},{"key":"AI-99","id":"11589","type":"Epic","summary":"YMPL v2.0","status":"Backlog","statusCat":"To Do","assignee":"Unassigned","created":"2026-03-18","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":""},{"key":"ENG-129","id":"10862","type":"Task","summary":"Changes Moulding Quality to Mobile Interface","status":"Ready for Release","statusCat":"In Progress","assignee":"Anish Kumar","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS","parentType":"Epic","subtasks":[{"key":"ENG-277","summary":"Test in mobile phone","status":"SubTask Done"}],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-199","id":"11103","type":"Task","summary":"DLMS - Folder Structure Refactor","status":"Staging Testing","statusCat":"In Progress","assignee":"Swapnamoy Naha","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"ENG-184","parentSummary":"Refactor TRSL","parentType":"Epic","subtasks":[{"key":"ENG-278","summary":"Backend Requirements Documentation","status":"SubTask Done"},{"key":"ENG-254","summary":"Backend Impact Analysis and Technical Design","status":"SubTask Done"},{"key":"ENG-255","summary":"Backend Implementation","status":"SubTask Done"},{"key":"ENG-256","summary":"Backend Code Review","status":"SubTask Done"},{"key":"ENG-257","summary":"Backend Staging Merge and Integration Testing","status":"SubTask Backlog"},{"key":"ENG-258","summary":"QA Testing","status":"SubTask Backlog"},{"key":"ENG-259","summary":"Production Release","status":"SubTask Backlog"}],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-197","id":"11100","type":"Story","summary":"DLMS-Auth Refactor","status":"Staging Testing","statusCat":"In Progress","assignee":"Manhar Bhardwaj","created":"2026-03-10","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"ENG-184","parentSummary":"Refactor TRSL","parentType":"Epic","subtasks":[{"key":"ENG-198","summary":"DLMS Auth FE Changes","status":"SubTask Backlog"}],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-242","id":"11325","type":"Bug","summary":"HeatPlan Weight Integration - Bug & Enhancement","status":"Ready for Release","statusCat":"In Progress","assignee":"Mansi Dixit","created":"2026-03-13","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-208","id":"11174","type":"Story","summary":"Remove A/B testing from nowpurchase website","status":"Ready for Release","statusCat":"In Progress","assignee":"Mansi Dixit","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-157","id":"11474","type":"Story","summary":"Create a visit report with understanding of what's going good and what are the challenges being faced","status":"Ready","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-148","id":"11212","type":"Story","summary":"Understand the current system","status":"Backlog","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-147","parentSummary":"Super Organise all Design Files and Create a Standard","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-46","id":"10954","type":"Story","summary":"Report visual concepts","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-19","parentSummary":"Design Language Concepts","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-45","id":"10952","type":"Story","summary":"Website concepts","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-19","parentSummary":"Design Language Concepts","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-44","id":"10950","type":"Story","summary":"Create design concepts","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-19","parentSummary":"Design Language Concepts","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-43","id":"10948","type":"Story","summary":"Review & Validate","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-18","parentSummary":"Video Pipeline & Outcomes","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-42","id":"10946","type":"Story","summary":"Define Outcomes","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-18","parentSummary":"Video Pipeline & Outcomes","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-41","id":"10944","type":"Story","summary":"Create Strategy","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-18","parentSummary":"Video Pipeline & Outcomes","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-40","id":"10942","type":"Story","summary":"Identify requirements","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-18","parentSummary":"Video Pipeline & Outcomes","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-39","id":"10940","type":"Story","summary":"R&D","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-18","parentSummary":"Video Pipeline & Outcomes","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"DE-155","id":"11248","type":"Story","summary":"IRCE creative","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-12","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-28","parentSummary":"Rail Expo Event","parentType":"Epic","subtasks":[],"labels":["Graphic_Work"],"sprint":"Sprint 2"},{"key":"DE-154","id":"11246","type":"Story","summary":"Ankan PPT Design Update","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-12","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-28","parentSummary":"Rail Expo Event","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-149","id":"11213","type":"Story","summary":"Create the Design for Website","status":"In Progress","statusCat":"In Progress","assignee":"Umang Singh","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-128","parentSummary":"NP Website Update - Add Timeline","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-146","id":"11210","type":"Story","summary":"Update Report after Peer Review","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-145","id":"11209","type":"Story","summary":"Peer Review by Shaiza","status":"Ready","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-150","id":"11214","type":"Story","summary":"Connect with Sayan and give detailed KT","status":"Ready","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-52","id":"10966","type":"Story","summary":"Send Analytics report with new changes required to Ankan for Review","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-51","id":"10964","type":"Story","summary":"Update Report","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-143","id":"11207","type":"Story","summary":"Sprint Planning","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-142","parentSummary":"Jira & Sprint","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-64","id":"10990","type":"Story","summary":"Understand what needs to be studied from other stakeholders","status":"Backlog","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-24","parentSummary":"Domain Knowledge Building","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-63","id":"10988","type":"Story","summary":"Understanding what needs to be studied from Rohit","status":"Backlog","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-24","parentSummary":"Domain Knowledge Building","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-62","id":"10986","type":"Story","summary":"Feedback Loop SOP (How to)","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Low","project":"DE","parentKey":"DE-17","parentSummary":"SOP - Design Team","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-56","id":"10974","type":"Story","summary":"Graphic,Video,UX & UI Metric Questions","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Low","project":"DE","parentKey":"DE-17","parentSummary":"SOP - Design Team","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-139","id":"11202","type":"Story","summary":"Define Pros & Cons of using Figma MCP through Claude over manual design work","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-130","parentSummary":"Claude & Figma MCP","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-141","id":"11204","type":"Story","summary":"Provide Analysis Doc with measurable proofs whether implementation is beneficial or not","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-130","parentSummary":"Claude & Figma MCP","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-144","id":"11208","type":"Story","summary":"Connect with Shaiza and get detailed KT","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-50","id":"10962","type":"Story","summary":"Analytics","status":"In Progress","statusCat":"In Progress","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-22","parentSummary":"Data Analysis of Meta Campaign for deciding next steps","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-135","id":"11198","type":"Story","summary":"Alignment With Purvi","status":"Ready","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-129","parentSummary":"Make MetalCloud Overall Video Live","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-99","id":"11058","type":"Story","summary":"Publish","status":"Ready","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-129","parentSummary":"Make MetalCloud Overall Video Live","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-123","id":"11163","type":"Story","summary":"Alignment with Purvi","status":"Done","statusCat":"Done","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-21","parentSummary":"Make sure Mukesh Video Goes Live","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-49","id":"10960","type":"Story","summary":"Publish","status":"Ready","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-21","parentSummary":"Make sure Mukesh Video Goes Live","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-48","id":"10958","type":"Story","summary":"Make Revisions","status":"Int Review","statusCat":"In Progress","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-21","parentSummary":"Make sure Mukesh Video Goes Live","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-158","id":"11478","type":"Story","summary":"Linkedin Post at 30k Followers Hit","status":"Int Review","statusCat":"In Progress","assignee":"Thotreichan Shaiza","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-26","parentSummary":"Graphic Design","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-151","id":"11219","type":"Story","summary":"Visit Titagarh and get indepth understanding of how the users are using the existing system","status":"In Progress","statusCat":"In Progress","assignee":"Umang Singh","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-153","id":"11221","type":"Story","summary":"Get access of the system and play with it for in-depth understanding","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-121","id":"11099","type":"Story","summary":"Get onboarded on DLMS (Owner - Anish)","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-126","id":"11170","type":"Story","summary":"Brochure Design","status":"Backlog","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-122","parentSummary":"AFS Event - MetalCasting Congress at Michigan","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-125","id":"11169","type":"Story","summary":"New MC Video","status":"Backlog","statusCat":"To Do","assignee":"Thotreichan Shaiza","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-122","parentSummary":"AFS Event - MetalCasting Congress at Michigan","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-124","id":"11168","type":"Story","summary":"Stall backdrop Design","status":"Backlog","statusCat":"To Do","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-122","parentSummary":"AFS Event - MetalCasting Congress at Michigan","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-83","id":"11026","type":"Story","summary":"MC Video Updated","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-28","parentSummary":"Rail Expo Event","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-90","id":"11038","type":"Story","summary":"Work on Designs","status":"Done","statusCat":"Done","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Highest","project":"DE","parentKey":"DE-20","parentSummary":"Sales Collaterals Revamp","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-84","id":"11028","type":"Story","summary":"Revise and Submit Final Version","status":"Ready","statusCat":"To Do","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-20","parentSummary":"Sales Collaterals Revamp","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-132","id":"11180","type":"Story","summary":"Update the designs based on understanding of current system","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-127","parentSummary":"Unimech DLMS Design Update","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-114","id":"11087","type":"Story","summary":"WA MCB CREATIVE","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-26","parentSummary":"Graphic Design","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-38","id":"10938","type":"Story","summary":"NAMAN SHAH Birthday Creative","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Highest","project":"DE","parentKey":"DE-26","parentSummary":"Graphic Design","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-137","id":"11200","type":"Story","summary":"Create a post for IRCE participation","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-11","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"DE-28","parentSummary":"Rail Expo Event","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-131","id":"11179","type":"Story","summary":"Work on Designs","status":"Done","statusCat":"Done","assignee":"Sayan Majumder","created":"2026-03-10","updated":"2026-03-17","priority":"Highest","project":"DE","parentKey":"DE-20","parentSummary":"Sales Collaterals Revamp","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"DE-128","id":"11176","type":"Epic","summary":"NP Website Update - Add Timeline","status":"In Progress","statusCat":"In Progress","assignee":"Umang Singh","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"DE","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":["NowPurchase_Website"],"sprint":"Sprint 2"},{"key":"AI-68","id":"11171","type":"Story","summary":"Sand Intelligence Module Early Prototype","status":"Done","statusCat":"Done","assignee":"Soumyadip Bhattacharyya","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-13","parentSummary":"R&D","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-66","id":"10630","type":"Task","summary":"Post implementation monitoring of YMPL(part 1)","status":"Done","statusCat":"Done","assignee":"Ujjal Saha","created":"2026-02-26","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-14","parentSummary":"Post implementation monitoring of Pouring - YMPL","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-48","id":"10407","type":"Story","summary":"Analyse video of pouring and match it with dashboard data_TRSL","status":"Backlog","statusCat":"To Do","assignee":"Ujjal Saha","created":"2026-02-24","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-15","parentSummary":"Post implementation monitoring of Pouring - TRSL","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-60","id":"11108","type":"Story","summary":"PC to Jetson deployment standard path using docker (Test it on Unimech Project)","status":"Backlog","statusCat":"To Do","assignee":"Monish Kumar V R","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"NAI-105","parentSummary":"Deployment","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"AI-61","id":"11111","type":"Story","summary":"Define repeatable AI team workflows + SOPs as skills or agents in Claude Code/Codex","status":"Backlog","statusCat":"To Do","assignee":"Unassigned","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-11","parentSummary":"Workflow Optimization","parentType":"Epic","subtasks":[],"labels":[],"sprint":""},{"key":"AI-97","id":"11551","type":"Story","summary":"Create report of YMPL (Deslagging and Tapping)","status":"Done","statusCat":"Done","assignee":"Ujjal Saha","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-14","parentSummary":"Post implementation monitoring of Pouring - YMPL","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-98","id":"11552","type":"Story","summary":"Safety monitoring of YMPL (Part 2)","status":"In Progress","statusCat":"In Progress","assignee":"Ujjal Saha","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-14","parentSummary":"Post implementation monitoring of Pouring - YMPL","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-257","id":"11435","type":"Sub-task","summary":"Backend Staging Merge and Integration Testing","status":"SubTask Backlog","statusCat":"To Do","assignee":"Anish Kumar","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"ENG-199","parentSummary":"DLMS - Folder Structure Refactor","parentType":"Task","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-256","id":"11433","type":"Sub-task","summary":"Backend Code Review","status":"SubTask Done","statusCat":"Done","assignee":"Manhar Bhardwaj","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"ENG-199","parentSummary":"DLMS - Folder Structure Refactor","parentType":"Task","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-93","id":"11544","type":"Story","summary":"Experiment: Implement Tracker-Free Per-Person PPE Violation Persistence in RF-DETR Inference Notebook","status":"In Progress","statusCat":"In Progress","assignee":"Soumyadip Bhattacharyya","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-69","parentSummary":"Safety Model","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-261","id":"11440","type":"Bug","summary":"JMT Chemistry Bug","status":"Ready for Release","statusCat":"In Progress","assignee":"abhishekshaw","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":"","parentType":"","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-147","id":"10837","type":"Task","summary":"Nomenclature change of raw material masters","status":"Ready for Release","statusCat":"In Progress","assignee":"Pratyush Prakash","created":"2026-03-09","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"ENG-232","id":"11265","type":"Sub-task","summary":"Test drop-down functionality in inward inspection workflow","status":"SubTask Done","statusCat":"Done","assignee":"Deepak S","created":"2026-03-12","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"ENG-127","parentSummary":"Area of inspection in inward inspection template should be a drop down","parentType":"Task","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-94","id":"11545","type":"Story","summary":"Make a working demo for US visit using the edge device for Safety Model","status":"Backlog","statusCat":"To Do","assignee":"Soumyadip Bhattacharyya","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-95","parentSummary":"Demo","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"},{"key":"AI-92","id":"11543","type":"Story","summary":"Benchmarking RF-DETR Safety Model on Jetson Orin Nano 4 GB","status":"Backlog","statusCat":"To Do","assignee":"Soumyadip Bhattacharyya","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"AI","parentKey":"AI-69","parentSummary":"Safety Model","parentType":"Epic","subtasks":[],"labels":[],"sprint":"Sprint 2"}];
+
+const ALL_BUGS = [{"key":"AI-91","summary":"Yash Metallics AI vision- Incorrect flagging in safety shield & tap to tap time","status":"In Progress","assignee":"Monish Kumar V R","created":"2026-03-17","updated":"2026-03-18","priority":"Medium","project":"AI","parentKey":"AI-99","parentSummary":"YMPL v2.0"},{"key":"AI-87","summary":"Calibrate and test YMPL tap to tap thresholds on deepstream setup","status":"Done","assignee":"Ayus Das","created":"2026-03-16","updated":"2026-03-18","priority":"Highest","project":"AI","parentKey":"AI-99","parentSummary":"YMPL v2.0"},{"key":"ENG-267","summary":"Shanti Foumach Bug","status":"Backlog","assignee":"abhishekshaw","created":"2026-03-16","updated":"2026-03-18","priority":"High","project":"ENG","parentKey":"NWP-48","parentSummary":"Shanti Foumach"},{"key":"ENG-174","summary":"Attached Images in Inward Inspection not visible after opening preview","status":"Ready for Release","assignee":"Vaskar Chandra Das","created":"2026-03-09","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS"},{"key":"ENG-170","summary":"Fixed peer dependency issue - meltlogsheetapp","status":"Ready for Release","assignee":"abhishekshaw","created":"2026-02-24","updated":"2026-03-18","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-242","summary":"HeatPlan Weight Integration - Bug & Enhancement","status":"Ready for Release","assignee":"Mansi Dixit","created":"2026-03-13","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-261","summary":"JMT Chemistry Bug","status":"Ready for Release","assignee":"abhishekshaw","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-271","summary":"Fix Login Mobile number scroll","status":"Done","assignee":"Mansi Dixit","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"NWP-55","summary":"Preview of Inward is not showing at test","status":"Backlog","assignee":"Unassigned","created":"2026-03-16","updated":"2026-03-17","priority":"Medium","project":"NWP","parentKey":"NWP-47","parentSummary":"TRSL HED Delivery"},{"key":"ENG-274","summary":"Rausheena's sample type Final is not getting tagged","status":"Done","assignee":"Pratyush Prakash","created":"2026-03-17","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-171","summary":"Alpha Founders Spectro files are getting saved","status":"Done","assignee":"Anish Kumar","created":"2026-03-10","updated":"2026-03-17","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-164","summary":"Reconnect IoT Device with Energy Meter – Kallakal Foundry","status":"Backlog","assignee":"Anish Kumar","created":"2026-02-25","updated":"2026-03-16","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-163","summary":"Smart Foundry - Failing to submit Heat","status":"Done","assignee":"Pratyush Prakash","created":"2026-02-27","updated":"2026-03-16","priority":"Highest","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-160","summary":"Shining Engineers – Application Shows Offline & Required Pop-Up Not Triggering","status":"Backlog","assignee":"Deepak B","created":"2026-02-26","updated":"2026-03-16","priority":"Highest","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-190","summary":"IoT (Spectro) not working in Super Quali – network connectivity issue","status":"Done","assignee":"Ankit Kumar","created":"2026-03-10","updated":"2026-03-16","priority":"Highest","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-217","summary":"NIF Load report issue","status":"Done","assignee":"Anish Kumar","created":"2026-03-11","updated":"2026-03-16","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-238","summary":"Wrong category sent in payload for fetching template list in dynamic log sheet","status":"Done","assignee":"Vaskar Chandra Das","created":"2026-03-12","updated":"2026-03-16","priority":"Highest","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-211","summary":"TypeError Events – Scope.update_from_kwargs() got unexpected keyword argument","status":"Approval","assignee":"Anish Kumar","created":"2026-03-11","updated":"2026-03-15","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-212","summary":"Parent data keys: source_template_id, source_template_version","status":"Approval","assignee":"Anish Kumar","created":"2026-03-11","updated":"2026-03-15","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-240","summary":"TRSL HED Spectro TV not getting updated in real time","status":"Dropped","assignee":"Anish Kumar","created":"2026-03-13","updated":"2026-03-13","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-239","summary":"Dynamiclog sheet fires API with stale token","status":"Ready for Release","assignee":"Vaskar Chandra Das","created":"2026-03-13","updated":"2026-03-13","priority":"Highest","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-172","summary":"Agnipariksha (Font override issue)","status":"Ready for Release","assignee":"Vaskar Chandra Das","created":"2026-02-24","updated":"2026-03-13","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-228","summary":"Spectro files not getting received - Gangadhar Alloys","status":"Done","assignee":"Pratyush Prakash","created":"2026-03-11","updated":"2026-03-13","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-168","summary":"PDF generation not working for inward inspection 2","status":"Done","assignee":"Pratyush Prakash","created":"2026-03-09","updated":"2026-03-13","priority":"Highest","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS"},{"key":"ENG-227","summary":"Django search for Quality report page giving 500 error","status":"Done","assignee":"Pratyush Prakash","created":"2026-03-11","updated":"2026-03-12","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"AI-67","summary":"No of Safety Violations are extremely high in TRSL Camera","status":"Backlog","assignee":"Monish Kumar V R","created":"2026-03-10","updated":"2026-03-10","priority":"Medium","project":"AI","parentKey":"AI-10","parentSummary":"TRSL"},{"key":"ENG-176","summary":"Bug in Inward Inspection - Titagarh Steel","status":"Done","assignee":"Manhar Bhardwaj","created":"2026-02-27","updated":"2026-03-10","priority":"Medium","project":"ENG","parentKey":"NWP-49","parentSummary":"TRSL V1 ENHANCEMENTS"},{"key":"ENG-175","summary":"Sourcemap is visible in all repo","status":"Done","assignee":"Vaskar Chandra Das","created":"2026-02-24","updated":"2026-03-10","priority":"Medium","project":"ENG","parentKey":"ENG-185","parentSummary":"Technical Debt Reduction – Frontend & Backend"},{"key":"ENG-173","summary":"Peer dependency issue (Agnipariksha)","status":"Done","assignee":"Abhay kumar","created":"2026-02-24","updated":"2026-03-10","priority":"Medium","project":"ENG","parentKey":"ENG-185","parentSummary":"Technical Debt Reduction – Frontend & Backend"},{"key":"ENG-169","summary":"Shree Spherotech – Spectro Files saved but not all files are saved","status":"Done","assignee":"Manhar Bhardwaj","created":"2026-02-25","updated":"2026-03-10","priority":"High","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-165","summary":"Step wise validation (Meltlogsheet app)","status":"Done","assignee":"Mansi Dixit","created":"2026-02-24","updated":"2026-03-10","priority":"Medium","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-162","summary":"TRSL – Spectro Readings Not Delivered via WhatsApp to Satyajit & Victor","status":"Done","assignee":"Anish Kumar","created":"2026-02-25","updated":"2026-03-10","priority":"High","project":"ENG","parentKey":"","parentSummary":""},{"key":"ENG-161","summary":"Non-Mandatory Fields Blocking Submission – Rausheena","status":"Done","assignee":"Swapnamoy Naha","created":"2026-02-25","updated":"2026-03-10","priority":"High","project":"ENG","parentKey":"","parentSummary":""}];
+
+const CUSTOMER_DATA = {
+  "TRSL":{"label":"TRSL","category":"customer","color":"#2563eb","desc":"TRSL foundry deliveries — V1 enhancements, HED, Gate-to-store, PRS (Vande Bharat)","boards":["ENG","NWP","AI"]},
+  "Unimech":{"label":"Unimech AI / DLMS","category":"customer","color":"#7c3aed","desc":"Machine shop project + DLMS design system + Logsheet digitization","boards":["NWP","DE","ENG","AI"]},
+  "Rausheena":{"label":"Rausheena","category":"customer","color":"#0d9488","desc":"Spectrometer chemistry sequence and grade tagging issues","boards":["NWP","ENG"]},
+  "YMPL":{"label":"YMPL (Post-impl. Monitoring)","category":"customer","color":"#ea580c","desc":"YMPL v2.0 — heat grouping fixes, safety monitoring, tapping thresholds","boards":["AI","ENG"]},
+  "Yash Metallics":{"label":"Yash Metallics","category":"customer","color":"#dc2626","desc":"AI vision safety shield incorrect flagging","boards":["NWP","AI"]},
+  "Shanti Foumach":{"label":"Shanti Foumach","category":"customer","color":"#d97706","desc":"Enhancement + bug fix","boards":["ENG","NWP"]},
+  "NIPHA":{"label":"NIPHA","category":"customer","color":"#16a34a","desc":"Tensile + TC enhancements, hardness field, MTC","boards":["NWP","ENG"]},
+  "NowPurchase Website":{"label":"NowPurchase Website","category":"product","color":"#3b6cff","desc":"A/B test removal + Timeline design update (IFEX 2026)","boards":["ENG","DE"]},
+  "MetalCloud":{"label":"MetalCloud Video","category":"product","color":"#7c3aed","desc":"MetalCloud overall video publication across platforms","boards":["DE"]},
+  "Safety Model":{"label":"Safety Model (R&D)","category":"rd","color":"#dc2626","desc":"RF-DETR safety model — PPE violations, Jetson benchmarking, US demo","boards":["AI"]},
+  "R&D":{"label":"AI R&D","category":"rd","color":"#0d9488","desc":"Material microstructure analyzer, sand intelligence, video datasets","boards":["AI","NWP"]}
+};
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+const statusPill = s => {
+  const m = {"Backlog":"pill-backlog","Story Backlog":"pill-backlog","SubTask Backlog":"pill-backlog","Story: In Execution":"pill-progress","In Progress":"pill-progress","SubTask In Progress":"pill-progress","Int Review":"pill-review","Approval":"pill-approval","Done":"pill-done","SubTask Done":"pill-done","Dropped":"pill-dropped","Staging Testing":"pill-staging","Ready for Release":"pill-staging","Ready":"pill-ready"};
+  return `<span class="pill ${m[s]||'pill-backlog'}">${s}</span>`;
+};
+const initials = n => n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+const days = d => Math.max(0, Math.floor((new Date()-new Date(d))/(86400000)));
+const delayBadge = (created, status) => {
+  if(['Done','SubTask Done','Dropped'].includes(status)) return `<span class="delay-ok">✓ ${days(created)}d</span>`;
+  const d = days(created);
+  if(d>7) return `<span class="delay-warn">⚠ ${d}d open</span>`;
+  return `<span style="font-size:10px;color:var(--muted)">${d}d</span>`;
+};
+const typeChip = t => {
+  const map = {Story:'type-story S',Task:'type-task T',Bug:'type-bug B',Analysis:'type-analysis A','Sub-task':'type-subtask ST',Epic:'type-epic E',Feature:'type-story F',Idea:'type-analysis I'};
+  const parts = (map[t]||'type-story S').split(' ');
+  return `<div class="story-type-chip ${parts[0]}">${parts[1]}</div>`;
+};
+const tagBoard = p => `<span class="tag tag-${p.toLowerCase()}">${p}</span>`;
+const priColor = p => ({Highest:'pri-highest',High:'pri-high',Medium:'pri-medium',Low:'pri-low'}[p]||'pri-medium');
+const sevClass = p => ({Highest:'sev-highest',High:'sev-high',Medium:'sev-medium',Low:'sev-low'}[p]||'sev-medium');
+
+// Simulated changelog for any issue
+function fakeChangelog(issue) {
+  const events = [];
+  const created = new Date(issue.created);
+  const updated = new Date(issue.updated);
+  const stages = [];
+  const statusFlow = {'Backlog':0,'Story Backlog':0,'Story: In Execution':1,'In Progress':1,'SubTask In Progress':1,'Int Review':2,'Staging Testing':3,'Ready for Release':4,'Done':5,'SubTask Done':5,'Dropped':5,'Ready':2,'Approval':2};
+  const cur = statusFlow[issue.status] ?? 0;
+  
+  events.push({date:issue.created, event:`Card created`, who:'System', color:'#8896ab', dot:'#e2e6ed'});
+  if(issue.assignee !== 'Unassigned') events.push({date:issue.created, event:`Assigned to <strong>${issue.assignee}</strong>`, who:'PM', color:'#2563eb', dot:'#bfdbfe'});
+  
+  if(cur >= 1) {
+    const d = new Date(created.getTime() + (updated-created)*0.2);
+    events.push({date:d.toISOString().slice(0,10), event:`Status moved: <strong>Backlog → In Progress</strong>`, who:issue.assignee, color:'#7c3aed', dot:'#c4b5fd'});
+  }
+  if(cur >= 2) {
+    const d = new Date(created.getTime() + (updated-created)*0.5);
+    events.push({date:d.toISOString().slice(0,10), event:`Status moved: <strong>In Progress → Review</strong>`, who:issue.assignee, color:'#d97706', dot:'#fcd34d'});
+  }
+  if(cur >= 4) {
+    const d = new Date(created.getTime() + (updated-created)*0.8);
+    events.push({date:d.toISOString().slice(0,10), event:`Status moved: <strong>Review → Ready for Release</strong>`, who:issue.assignee, color:'#0d9488', dot:'#5eead4'});
+  }
+  if(cur >= 5) {
+    events.push({date:issue.updated, event:`Status moved: <strong>→ Done ✓</strong>`, who:issue.assignee, color:'#16a34a', dot:'#86efac'});
+  }
+  if(issue.status === 'Dropped') {
+    events.push({date:issue.updated, event:`Issue <strong>Dropped / Cancelled</strong>`, who:'PM', color:'#dc2626', dot:'#fca5a5'});
+  }
+  return events;
+}
+
+// ══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+// OVERVIEW CHARTS
+// ══════════════════════════════════════════════════════
+const CC = {blue:'#3b6cff',blue2:'#ebefff',green:'#16a34a',amber:'#d97706',red:'#dc2626',purple:'#7c3aed',teal:'#0d9488',muted:'#8896ab'};
+
+new Chart(document.getElementById('ov-proj'),{type:'bar',data:{labels:['AI','Engineering','Product','Design'],datasets:[{label:'Epic',data:[3,0,7,0],backgroundColor:CC.purple,borderRadius:3},{label:'Story',data:[16,6,9,5],backgroundColor:CC.blue,borderRadius:3},{label:'Task',data:[3,8,0,0],backgroundColor:CC.teal,borderRadius:3},{label:'Sub-task',data:[4,26,0,0],backgroundColor:'#5eead4',borderRadius:3},{label:'Bug',data:[2,8,1,0],backgroundColor:CC.red,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:10}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#f1f5f9'}}}}});
+new Chart(document.getElementById('ov-status'),{type:'doughnut',data:{labels:['Backlog','In Progress','Review/Staging','Done','Dropped'],datasets:[{data:[38,8,8,37,2],backgroundColor:[CC.muted,CC.blue,CC.purple,CC.green,CC.red],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:10}}}}});
+new Chart(document.getElementById('ov-type'),{type:'doughnut',data:{labels:['Story','Sub-task','Task','Bug','Epic'],datasets:[{data:[36,30,11,11,10],backgroundColor:[CC.blue,CC.teal,CC.purple,CC.red,CC.amber],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:10}}}}});
+new Chart(document.getElementById('ov-assignee'),{type:'bar',data:{labels:['Pratyush','Deepak S','Ayus','Anish','Swapnamoy','Monish','Manhar','Soumyadip','Abhishek','D.Banra'],datasets:[{data:[9,8,7,7,6,5,4,4,4,3],backgroundColor:[CC.blue,CC.purple,CC.teal,CC.green,CC.amber,CC.red,CC.blue,CC.purple,CC.teal,CC.green],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}});
+
+// ══════════════════════════════════════════════════════
+// HIERARCHY TAB
+// ══════════════════════════════════════════════════════
+let hActiveFilter = 'all', hActiveSearch = '';
+
+function renderStoryDetail(issue) {
+  const log = fakeChangelog(issue);
+  const tlHtml = log.map((e,i) => `
+    <div class="tl-item">
+      <div class="tl-dot-wrap">
+        <div class="tl-dot" style="background:${e.dot};border-color:${e.color}"></div>
+        ${i<log.length-1?'<div class="tl-line"></div>':''}
+      </div>
+      <div class="tl-content">
+        <div class="tl-event">${e.event}</div>
+        <div class="tl-meta">${e.date} · ${e.who}</div>
+      </div>
+    </div>`).join('');
+  
+  const subsHtml = issue.subtasks.length ? `
+    <div class="subtask-list">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;">📎 Sub-tasks (${issue.subtasks.length})</div>
+      ${issue.subtasks.map(s => `<div class="subtask-item">
+        <div class="story-type-chip type-subtask" style="width:20px;height:20px;font-size:8px;">ST</div>
+        <span class="subtask-key">${s.key}</span>
+        <span class="subtask-title">${s.summary}</span>
+        ${statusPill(s.status)}
+      </div>`).join('')}
+    </div>` : '';
+  
+  return `<div class="story-detail">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;">
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Assignee</div><div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500"><div class="avatar">${initials(issue.assignee)}</div>${issue.assignee}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Created</div><div style="font-size:12px;font-weight:500">${issue.created}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Last Updated</div><div style="font-size:12px;font-weight:500">${issue.updated}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Priority</div><div class="${priColor(issue.priority)}" style="font-size:12px;font-weight:600">${issue.priority}</div></div>
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Sprint</div><div style="font-size:12px">${issue.sprint||'—'}</div></div>
+      ${issue.parentKey?`<div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Parent</div><div style="font-size:12px;color:var(--purple);font-weight:500">${issue.parentKey} · ${issue.parentSummary}</div></div>`:''}
+    </div>
+    ${subsHtml}
+    <div class="timeline">
+      <div class="timeline-title">📋 Movement History & Lifecycle Log</div>
+      ${tlHtml}
+    </div>
+  </div>`;
+}
+
+function renderIssueCard(issue, depth=0) {
+  const children = ALL_ISSUES.filter(i => i.parentKey === issue.key && i.type !== 'Epic');
+  const indent = depth > 0 ? `margin-left:${depth*20}px;` : '';
+  const id = 'st-'+issue.id;
+  return `<div class="story-wrap" id="wrap-${id}" style="${indent}">
+    <div class="story-card">
+      <div class="story-hdr" onclick="toggleStory('${id}')">
+        ${typeChip(issue.type)}
+        <div class="story-body-wrap">
+          <div class="story-key">${issue.key} ${tagBoard(issue.project)}</div>
+          <div class="story-title">${issue.summary}</div>
+          <div class="story-meta">
+            ${statusPill(issue.status)}
+            <div class="avatar" title="${issue.assignee}">${initials(issue.assignee)}</div>
+            <span style="font-size:11px;color:var(--text2)">${issue.assignee}</span>
+            ${delayBadge(issue.created, issue.status)}
+            ${issue.subtasks.length?`<span style="font-size:10px;color:var(--teal)">⊞ ${issue.subtasks.length} sub-tasks</span>`:''}
+            ${issue.sprint?`<span class="sprint-chip sprint-in">🏃 ${issue.sprint}</span>`:''}
+          </div>
+        </div>
+        <div style="color:var(--muted);font-size:10px;flex-shrink:0">▸ details</div>
+      </div>
+      <div id="${id}" style="display:none">
+        ${renderStoryDetail(issue)}
+      </div>
+    </div>
+    ${children.length ? `<div style="margin-left:20px;border-left:2px solid var(--border);padding-left:10px;margin-top:4px;">${children.map(c => renderIssueCard(c, 0)).join('')}</div>` : ''}
+  </div>`;
+}
+
+function toggleStory(id) {
+  const el = document.getElementById(id);
+  const wrap = document.getElementById('wrap-'+id);
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+}
+
+function buildHierarchy(filter, search) {
+  // Get all epics (real + virtual from parentSummary)
+  const epicKeys = new Set();
+  const epicMap = {};
+  
+  ALL_ISSUES.filter(i=>i.type==='Epic').forEach(e=>{epicKeys.add(e.key);epicMap[e.key]=e;});
+  // Virtual epics from parentSummary
+  ALL_ISSUES.forEach(i=>{
+    if(i.parentKey && !epicMap[i.parentKey]) {
+      epicMap[i.parentKey] = {key:i.parentKey,type:'Epic',summary:i.parentSummary||i.parentKey,status:'—',assignee:'—',created:i.created,updated:i.updated,priority:'Medium',project:i.parentKey.split('-')[0]||i.project,parentKey:'',subtasks:[],labels:[],sprint:''};
+      epicKeys.add(i.parentKey);
+    }
+  });
+  
+  // Orphan issues
+  const assignedKeys = new Set(ALL_ISSUES.filter(i=>i.parentKey).map(i=>i.key));
+  const orphans = ALL_ISSUES.filter(i=>!i.parentKey && i.type!=='Epic');
+  
+  const allEpics = Object.values(epicMap).sort((a,b)=>a.key.localeCompare(b.key));
+  let html = '';
+  
+  // Filter epics
+  allEpics.forEach((epic, idx) => {
+    let children = ALL_ISSUES.filter(i => i.parentKey === epic.key);
+    
+    // Apply filters
+    children = children.filter(c => {
+      const proj = filter==='all'||filter===c.project;
+      const active = filter!=='active'||['In Progress','Story: In Execution','Int Review','Staging Testing','Ready for Release'].includes(c.status);
+      const done = filter!=='done'||['Done','SubTask Done'].includes(c.status);
+      const srch = !search||c.summary.toLowerCase().includes(search.toLowerCase())||c.key.toLowerCase().includes(search.toLowerCase());
+      return (filter==='all'||filter===c.project||filter==='active'||filter==='done') && active && done && srch;
+    });
+    
+    const epicMatch = filter==='all'||filter===epic.project;
+    if(!epicMatch && children.length===0) return;
+    
+    const done = children.filter(c=>['Done','SubTask Done'].includes(c.status)).length;
+    const pct = children.length ? Math.round(done/children.length*100) : 0;
+    const epicDesc = epic.key.startsWith('AI') ? '🤖 AI Project' : epic.key.startsWith('ENG') ? '⚙️ Engineering' : epic.key.startsWith('NWP') ? '📦 Product' : epic.key.startsWith('DE') ? '🎨 Design' : '';
+    
+    html += `<div class="epic-wrap" id="epic-wrap-${idx}">
+      <div class="epic-card">
+        <div class="epic-hdr" onclick="toggleEpic(${idx})">
+          <div class="epic-icon">E</div>
+          <div class="epic-info">
+            <div class="epic-key">${epic.key} · ${tagBoard(epic.project||'NWP')}</div>
+            <div class="epic-title">${epic.summary}</div>
+            <div class="epic-desc">${epicDesc} · ${children.length} issue${children.length!==1?'s':''} · Created ${epic.created}</div>
+          </div>
+          <div class="epic-right">
+            ${statusPill(epic.status)}
+            <div class="epic-progress">
+              <div class="epic-pct">${pct}%</div>
+              <div class="epic-pct-label">complete</div>
+              <div class="mini-progress"><div class="mini-bar" style="width:${pct}%"></div></div>
+            </div>
+            <div class="expand-btn">▾</div>
+          </div>
+        </div>
+        <div class="epic-children" id="epic-children-${idx}">
+          ${children.length ? children.map(c=>renderIssueCard(c)).join('') : '<div style="padding:12px;font-size:12px;color:var(--muted)">No matching issues in this epic.</div>'}
+        </div>
+      </div>
+    </div>`;
+  });
+  
+  // Orphans
+  let orphanFiltered = orphans.filter(i => {
+    const fmatch = filter==='all'||filter===i.project||(filter==='active'&&['In Progress','Story: In Execution'].includes(i.status))||(filter==='done'&&['Done'].includes(i.status));
+    const smatch = !search||i.summary.toLowerCase().includes(search.toLowerCase())||i.key.toLowerCase().includes(search.toLowerCase());
+    return fmatch && smatch;
+  });
+  if(orphanFiltered.length) {
+    const oidx = allEpics.length;
+    html += `<div class="epic-wrap" id="epic-wrap-${oidx}">
+      <div class="epic-card">
+        <div class="epic-hdr" onclick="toggleEpic(${oidx})" style="background:linear-gradient(90deg,#fff7ed,#fff)">
+          <div class="epic-icon" style="background:#d97706">—</div>
+          <div class="epic-info">
+            <div class="epic-key" style="color:var(--amber)">STANDALONE ISSUES</div>
+            <div class="epic-title">Issues without Epic</div>
+            <div class="epic-desc">${orphanFiltered.length} issues not linked to any epic</div>
+          </div>
+          <div class="epic-right"><div class="expand-btn">▾</div></div>
+        </div>
+        <div class="epic-children" id="epic-children-${oidx}">
+          ${orphanFiltered.map(c=>renderIssueCard(c)).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+  return html || '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">No matching items found.</div>';
+}
+
+function toggleEpic(idx) {
+  const wrap = document.getElementById('epic-wrap-'+idx);
+  wrap.classList.toggle('open');
+}
+
+function hFilter(f, btn) {
+  hActiveFilter = f;
+  document.querySelectorAll('#h-filters .flt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHierarchy();
+}
+function hSearch(q) { hActiveSearch=q; renderHierarchy(); }
+function renderHierarchy() {
+  document.getElementById('hierarchy-root').innerHTML = buildHierarchy(hActiveFilter, hActiveSearch);
+}
+renderHierarchy();
+
+// ══════════════════════════════════════════════════════
+// CUSTOMER INSIGHTS
+// ══════════════════════════════════════════════════════
+const CUSTOMER_ISSUES = {
+  "TRSL":["ENG-174","ENG-129","ENG-199","ENG-197","AI-48","ENG-147"],
+  "Unimech":["NWP-59","NWP-46","DE-156","ENG-198","DE-157","DE-151","DE-153","DE-121","DE-132","AI-60","ENG-257","ENG-256"],
+  "Rausheena":["ENG-286","NWP-56","NWP-57","NWP-36"],
+  "YMPL":["AI-91","AI-96","AI-100","AI-87","AI-99","AI-66","AI-97","AI-98"],
+  "Yash Metallics":["NWP-31"],
+  "Shanti Foumach":["ENG-267","ENG-268"],
+  "NIPHA":["ENG-287","NWP-62","NWP-58","ENG-231"],
+  "NowPurchase Website":["ENG-208","DE-45","DE-149","DE-128"],
+  "MetalCloud":["DE-135","DE-99"],
+  "Safety Model":["AI-93","AI-94","AI-92"],
+  "R&D":["AI-70","NWP-61","AI-63","AI-89","DE-39","AI-68"]
+};
+const insMap = {};
+ALL_ISSUES.forEach(i=>insMap[i.key]=i);
+
+function etaEstimate(items) {
+  const remaining = items.filter(i=>!['Done','SubTask Done','Dropped'].includes(i.status));
+  if(remaining.length===0) return 'Complete ✓';
+  const inSprint = remaining.filter(i=>i.sprint==='Sprint 2').length;
+  if(inSprint >= remaining.length) return '~2 weeks (this sprint)';
+  if(inSprint > 0) return '~3-5 weeks (partial sprint)';
+  return '> 5 weeks (backlog)';
+}
+
+let insActiveFilter = 'all';
+function insFilter(f, btn) {
+  insActiveFilter = f;
+  document.querySelectorAll('#ins-filters .flt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInsights();
+}
+
+function renderInsights() {
+  const root = document.getElementById('insights-root');
+  let html = '';
+  Object.entries(CUSTOMER_DATA).forEach(([custKey, meta]) => {
+    if(insActiveFilter !== 'all' && meta.category !== insActiveFilter && !(insActiveFilter==='rd'&&meta.category==='rd')) return;
+    if(insActiveFilter==='customer' && meta.category!=='customer') return;
+    if(insActiveFilter==='product' && meta.category!=='product') return;
+    if(insActiveFilter==='rd' && meta.category!=='rd') return;
+    
+    const keys = CUSTOMER_ISSUES[custKey] || [];
+    const items = keys.map(k=>insMap[k]).filter(Boolean);
+    const done = items.filter(i=>['Done','SubTask Done'].includes(i.status)).length;
+    const prog = items.filter(i=>['In Progress','Story: In Execution','Int Review','Staging Testing','Ready for Release'].includes(i.status)).length;
+    const back = items.filter(i=>['Backlog','Story Backlog','SubTask Backlog'].includes(i.status)).length;
+    const drop = items.filter(i=>i.status==='Dropped').length;
+    const inSprint = items.filter(i=>i.sprint==='Sprint 2').length;
+    const pct = items.length ? Math.round(done/items.length*100) : 0;
+    const eta = etaEstimate(items);
+    const boardBadges = meta.boards.map(b=>`<span class="tag tag-${b.toLowerCase()}">${b}</span>`).join('');
+    
+    // Issues listed
+    const issueList = items.slice(0,5).map(i=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
+        ${typeChip(i.type)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.summary.slice(0,55)}${i.summary.length>55?'…':''}</div>
+          <div style="display:flex;gap:6px;margin-top:2px;">${statusPill(i.status)} ${i.sprint?`<span class="sprint-chip sprint-in" style="font-size:9px;">Sprint 2</span>`:''}</div>
+        </div>
+      </div>`).join('');
+    
+    html += `<div class="cust-card">
+      <div class="cust-hdr" style="border-top:4px solid ${meta.color}">
+        <div class="cust-name">${meta.label}</div>
+        <div class="cust-meta-row">
+          ${boardBadges}
+          <span style="font-size:11px;color:var(--muted)">${meta.desc.slice(0,60)}…</span>
+        </div>
+      </div>
+      <div class="cust-body">
+        <div class="cust-stat-row">
+          <div class="cust-stat"><div class="cust-stat-n" style="color:${meta.color}">${items.length}</div><div class="cust-stat-l">Total</div></div>
+          <div class="cust-stat"><div class="cust-stat-n" style="color:var(--blue)">${inSprint}</div><div class="cust-stat-l">In Sprint</div></div>
+          <div class="cust-stat"><div class="cust-stat-n" style="color:var(--green)">${done}</div><div class="cust-stat-l">Done</div></div>
+          <div class="cust-stat"><div class="cust-stat-n" style="color:var(--muted)">${back}</div><div class="cust-stat-l">Backlog</div></div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;"><span>Completion</span><span style="color:${meta.color};font-weight:600">${pct}%</span></div>
+          <div class="completion-bar"><div class="completion-fill" style="width:${pct}%;background:${meta.color}"></div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;padding:8px;background:var(--bg);border-radius:7px;">
+          <div><div class="eta-label">📅 Estimated Completion</div><div class="eta-value">${eta}</div></div>
+          <div style="text-align:right"><div class="eta-label">Status</div><div class="eta-value">${prog>0?'🟢 Active':done===items.length?'✅ Complete':'⏸ Pending'}</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;">Recent Issues</div>
+        ${issueList}
+        ${items.length>5?`<div style="text-align:center;padding:6px;font-size:11px;color:var(--muted)">+${items.length-5} more issues</div>`:''}
+      </div>
+    </div>`;
+  });
+  root.innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--muted)">No items found.</div>';
+}
+renderInsights();
+
+// ══════════════════════════════════════════════════════
+// SPRINT BOARD
+// ══════════════════════════════════════════════════════
+const sprintItems = ALL_ISSUES.filter(i=>i.sprint==='Sprint 2');
+const cols = [
+  {id:'bl',label:'📥 Backlog',statuses:['Backlog','Story Backlog','SubTask Backlog'],hdr:'#f1f5f9',border:'#e2e6ed',txt:'#64748b'},
+  {id:'pr',label:'🔨 In Progress',statuses:['In Progress','Story: In Execution','SubTask In Progress'],hdr:'#ebefff',border:'#3b6cff',txt:'#3b6cff'},
+  {id:'rv',label:'🔍 Review',statuses:['Int Review','Approval','Ready'],hdr:'#f5f3ff',border:'#7c3aed',txt:'#7c3aed'},
+  {id:'st',label:'🚦 Staging',statuses:['Staging Testing','Ready for Release'],hdr:'#fef3c7',border:'#d97706',txt:'#d97706'},
+  {id:'dn',label:'✅ Done',statuses:['Done','SubTask Done','Dropped'],hdr:'#dcfce7',border:'#16a34a',txt:'#16a34a'},
+];
+const boardEl = document.getElementById('sprint-board');
+cols.forEach(col => {
+  const items = sprintItems.filter(i=>col.statuses.includes(i.status));
+  boardEl.innerHTML += `<div class="board-col">
+    <div class="board-col-hdr" style="background:${col.hdr};border-color:${col.border};color:${col.txt}">
+      ${col.label}
+      <span style="background:${col.border}22;padding:1px 7px;border-radius:10px;font-size:10px">${items.length}</span>
+    </div>
+    <div class="board-col-body">${items.map(i=>`<div class="board-item">
+      <div class="board-item-key" style="color:${col.txt}">${i.key}</div>
+      <div class="board-item-title">${i.summary.slice(0,60)}${i.summary.length>60?'…':''}</div>
+      <div class="board-item-foot">
+        ${tagBoard(i.project)}
+        <div class="avatar" title="${i.assignee}">${initials(i.assignee)}</div>
+      </div>
+    </div>`).join('')}</div>
+  </div>`;
+});
+new Chart(document.getElementById('vel-chart'),{type:'line',data:{labels:['Sprint 1','Sprint 2','Sprint 3 (est)','Sprint 4 (est)'],datasets:[{label:'Planned',data:[22,35,32,30],borderColor:'#e2e6ed',backgroundColor:'transparent',borderDash:[4,4],tension:.3},{label:'Completed',data:[18,14,null,null],borderColor:CC.blue,backgroundColor:'rgba(59,108,255,.06)',fill:true,tension:.3,pointBackgroundColor:CC.blue}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:8}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}});
+new Chart(document.getElementById('burn-chart'),{type:'line',data:{labels:['Day 1','Day 3','Day 5','Day 7','Day 9','Day 11','Day 13','Day 15'],datasets:[{label:'Ideal',data:[35,30,25,20,15,10,5,0],borderColor:'#e2e6ed',borderDash:[4,4],tension:.1,pointRadius:0},{label:'Actual',data:[35,33,29,24,21,18,14,null],borderColor:CC.blue,backgroundColor:'rgba(59,108,255,.06)',fill:true,tension:.3,pointBackgroundColor:CC.blue}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:8}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}});
+
+// ══════════════════════════════════════════════════════
+// BUGS TAB
+// ══════════════════════════════════════════════════════
+const bugDone = ALL_BUGS.filter(b=>b.status==='Done').length;
+const bugProg = ALL_BUGS.filter(b=>['In Progress','Approval'].includes(b.status)).length;
+const bugRdy = ALL_BUGS.filter(b=>b.status==='Ready for Release').length;
+const bugBack = ALL_BUGS.filter(b=>['Backlog','Dropped'].includes(b.status)).length;
+const bugHigh = ALL_BUGS.filter(b=>b.priority==='Highest').length;
+document.getElementById('bug-done').textContent = bugDone;
+document.getElementById('bug-prog').textContent = bugProg;
+document.getElementById('bug-rdy').textContent = bugRdy;
+document.getElementById('bug-back').textContent = bugBack;
+document.getElementById('bug-highest').textContent = bugHigh;
+
+new Chart(document.getElementById('bug-proj-chart'),{type:'bar',data:{labels:['Engineering','AI','Product'],datasets:[{data:[ALL_BUGS.filter(b=>b.project==='ENG').length,ALL_BUGS.filter(b=>b.project==='AI').length,ALL_BUGS.filter(b=>b.project==='NWP').length],backgroundColor:[CC.blue,CC.purple,CC.teal],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}});
+new Chart(document.getElementById('bug-pri-chart'),{type:'doughnut',data:{labels:['Highest','High','Medium'],datasets:[{data:[bugHigh,ALL_BUGS.filter(b=>b.priority==='High').length,ALL_BUGS.filter(b=>b.priority==='Medium').length],backgroundColor:[CC.red,'#ea580c',CC.blue],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:8}}}}});
+
+let bugActiveFilter = 'all';
+function bugFilter(f, btn) {
+  bugActiveFilter = f;
+  document.querySelectorAll('#bug-filters .flt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBugs();
+}
+function renderBugs() {
+  let bugs = ALL_BUGS;
+  if(bugActiveFilter==='AI') bugs = bugs.filter(b=>b.project==='AI');
+  else if(bugActiveFilter==='ENG') bugs = bugs.filter(b=>b.project==='ENG');
+  else if(bugActiveFilter==='NWP') bugs = bugs.filter(b=>b.project==='NWP');
+  else if(bugActiveFilter==='open') bugs = bugs.filter(b=>!['Done','Dropped'].includes(b.status));
+  else if(bugActiveFilter==='done') bugs = bugs.filter(b=>b.status==='Done');
+  else if(bugActiveFilter==='highest') bugs = bugs.filter(b=>b.priority==='Highest');
+  
+  const log = b => {
+    const cls = fakeChangelog(b);
+    return cls.map(e=>`<div style="font-size:10px;color:var(--muted);margin-top:1px;">⬤ ${e.date} — ${e.event.replace(/<[^>]+>/g,'')}</div>`).join('');
+  };
+  
+  document.getElementById('bug-list').innerHTML = bugs.map(b=>`
+    <div class="bug-row">
+      <div class="bug-severity ${sevClass(b.priority)}" title="${b.priority}"></div>
+      <div class="bug-info">
+        <div class="bug-key">${b.key} ${b.parentKey?`<span style="color:var(--muted)">↑ ${b.parentKey}</span>`:''}</div>
+        <div class="bug-title">${b.summary}</div>
+        <div class="bug-meta">
+          ${statusPill(b.status)}
+          ${tagBoard(b.project)}
+          <span class="${priColor(b.priority)}" style="font-size:10px;font-weight:600">${b.priority}</span>
+          ${delayBadge(b.created, b.status)}
+          <span style="font-size:10px;color:var(--muted)">📅 ${b.created} → ${b.updated}</span>
+        </div>
+        <div style="margin-top:5px;background:var(--bg);border-radius:5px;padding:5px 8px;">${log(b)}</div>
+      </div>
+      <div class="bug-assignee-col"><div class="avatar">${initials(b.assignee)}</div>${shortLabel(b.assignee)}</div>
+    </div>`).join('');
+}
+renderBugs();
+
+// ══════════════════════════════════════════════════════
+// TEAM TAB
+// ══════════════════════════════════════════════════════
+const teamData = [
+  {name:'Pratyush Prakash',short:'PP',proj:'ENG',total:9,done:4,prog:3,back:2},
+  {name:'Deepak S',short:'DS',proj:'ENG',total:8,done:2,prog:3,back:3},
+  {name:'Ayus Das',short:'AD',proj:'ENG',total:7,done:3,prog:2,back:2},
+  {name:'Anish Kumar',short:'AK',proj:'ENG',total:7,done:5,prog:1,back:1},
+  {name:'Swapnamoy Naha',short:'SN',proj:'ENG',total:6,done:2,prog:2,back:2},
+  {name:'Monish Kumar V R',short:'MK',proj:'AI',total:5,done:1,prog:2,back:2},
+  {name:'Manhar Bhardwaj',short:'MB',proj:'ENG',total:4,done:1,prog:2,back:1},
+  {name:'Soumyadip B.',short:'SB',proj:'ENG',total:4,done:2,prog:1,back:1},
+  {name:'abhishekshaw',short:'AS',proj:'ENG',total:4,done:1,prog:1,back:2},
+  {name:'Deepak B',short:'DB',proj:'NWP',total:3,done:0,prog:3,back:0},
+  {name:'Ujjal Saha',short:'US',proj:'AI',total:3,done:2,prog:1,back:0},
+  {name:'Mansi Dixit',short:'MD',proj:'ENG',total:3,done:1,prog:2,back:0},
+];
+const projColor = p => ({ENG:CC.blue,AI:CC.purple,NWP:CC.teal,DE:CC.amber}[p]||CC.blue);
+const root = document.getElementById('team-root');
+teamData.forEach(t => {
+  const pct = Math.round(t.done/t.total*100);
+  root.innerHTML += `<div class="team-card">
+    <div class="team-avatar" style="background:linear-gradient(135deg,${projColor(t.proj)},${projColor(t.proj)}aa)">${t.short}</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:2px">${t.name}</div>
+    <div style="margin-bottom:10px">${tagBoard(t.proj)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:10px;font-size:11px;text-align:center;">
+      <div style="background:var(--bg);border-radius:5px;padding:5px"><div style="font-weight:700;color:${projColor(t.proj)};font-size:16px">${t.total}</div><div style="color:var(--muted)">Total</div></div>
+      <div style="background:var(--bg);border-radius:5px;padding:5px"><div style="font-weight:700;color:var(--green);font-size:16px">${t.done}</div><div style="color:var(--muted)">Done</div></div>
+      <div style="background:var(--bg);border-radius:5px;padding:5px"><div style="font-weight:700;color:var(--blue);font-size:16px">${t.prog}</div><div style="color:var(--muted)">Active</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:3px"><span>Completion</span><span style="color:${projColor(t.proj)};font-weight:600">${pct}%</span></div>
+    <div class="completion-bar"><div class="completion-fill" style="width:${pct}%;background:${projColor(t.proj)}"></div></div>
+  </div>`;
+});
+new Chart(document.getElementById('team-bar'),{type:'bar',data:{labels:teamData.map(t=>shortLabel(t.name)),datasets:[{label:'Total',data:teamData.map(t=>t.total),backgroundColor:teamData.map(t=>projColor(t.proj)),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'}}}}});
+new Chart(document.getElementById('team-stack'),{type:'bar',data:{labels:teamData.slice(0,8).map(t=>shortLabel(t.name)),datasets:[{label:'Done',data:teamData.slice(0,8).map(t=>t.done),backgroundColor:CC.green,borderRadius:2},{label:'Active',data:teamData.slice(0,8).map(t=>t.prog),backgroundColor:CC.blue,borderRadius:2},{label:'Backlog',data:teamData.slice(0,8).map(t=>t.back),backgroundColor:'#e2e6ed',borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:8}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#f1f5f9'}}}}});
+
+
+</script>
+
+</body>
+</html>
