@@ -6,6 +6,8 @@ import jiraService from './services/jiraService';
 import moment from 'moment';
 import './styles/App.css';
 
+import menuSequence from './config/menu_sequence.json';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [expandedSprints, setExpandedSprints] = useState({});
@@ -131,6 +133,33 @@ function App() {
 
       const computedSprints = Array.from(allSprintsMap.values()).filter(s => s.boards.length > 0);
       
+      // Apply custom sorting to boards and employees within each sprint
+      computedSprints.forEach(sprint => {
+        // Sort boards based on menuSequence.boards
+        sprint.boards.sort((a, b) => {
+          const indexA = menuSequence.boards.indexOf(a.name);
+          const indexB = menuSequence.boards.indexOf(b.name);
+          
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        // Sort employees within each board based on menuSequence.employees
+        sprint.boards.forEach(board => {
+          board.employees.sort((a, b) => {
+            const indexA = menuSequence.employees.indexOf(a.name);
+            const indexB = menuSequence.employees.indexOf(b.name);
+            
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            return a.name.localeCompare(b.name);
+          });
+        });
+      });
+
       // Sort sprints (Active first, then future, then id)
       computedSprints.sort((a, b) => {
         if (a.state === 'active' && b.state !== 'active') return -1;
