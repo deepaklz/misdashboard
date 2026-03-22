@@ -23,12 +23,12 @@ export default async function handler(req, res) {
     params.append(key, value);
   }
 
-  // Support both Agile and Core APIs
-  // If endpoint starts with /search or /issue, it's likely Core V3
-  // Otherwise, default to Agile 1.0 for boards/sprints
-  let apiPath = '/rest/agile/1.0';
-  if (endpoint.startsWith('/search') || endpoint.startsWith('/issue/') || endpoint.startsWith('/user/')) {
-    apiPath = '/rest/api/3';
+  // Route based on endpoint type
+  let apiPath;
+  if (endpoint.startsWith('/search')) {
+    apiPath = '/rest/api/3';  // REST API v3 for JQL search
+  } else {
+    apiPath = '/rest/agile/1.0';  // Agile API for boards/sprints
   }
 
   const urlString = `${JIRA_BASE_URL}${apiPath}${endpoint}${params.toString() ? '?' + params.toString() : ''}`;

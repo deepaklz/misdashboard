@@ -11,6 +11,8 @@ const jiraClient = axios.create({
   }
 });
 
+const ISSUE_FIELDS = 'summary,status,assignee,created,resolutiondate,updated,duedate,subtasks,issuetype,project';
+
 export const jiraService = {
   // Get all boards
   async getBoards() {
@@ -47,58 +49,63 @@ export const jiraService = {
 
   // Get issues for a sprint
   async getSprintIssues(sprintId) {
-    try {
-      const response = await jiraClient.get('', {
-        params: {
-          endpoint: `/sprint/${sprintId}/issue`,
-          fields: 'summary,status,assignee,created,resolutiondate,updated,duedate,subtasks,issuetype,project'
-        }
-      });
-      return response.data.issues;
-    } catch (error) {
-      console.error('Error fetching sprint issues:', error);
-      throw error;
+    return this.fetchAllAgilePages(`/sprint/${sprintId}/issue`, { fields: ISSUE_FIELDS });
+  },
+
+  // Helper for Agile API pagination
+  async fetchAllAgilePages(endpoint, extraParams = {}) {
+    let all = [];
+    let startAt = 0;
+    const maxResults = 100;
+    while (true) {
+      try {
+        const { data } = await jiraClient.get('', {
+          params: { endpoint, startAt, maxResults, ...extraParams },
+        });
+        const page = data.issues ?? [];
+        all = all.concat(page);
+        if (all.length >= (data.total ?? all.length) || page.length < maxResults) break;
+        startAt += page.length;
+      } catch (error) {
+        console.error(`Error fetching agile pages for ${endpoint}:`, error);
+        throw error;
+      }
     }
+    return all;
+  },
+
+  // Helper for JQL API pagination (cursor-based)
+  async fetchAllJqlPages(jql, fields) {
+    let all = [];
+    let nextPageToken = undefined;
+    const maxResults = 100;
+    while (true) {
+      try {
+        const params = { endpoint: '/search/jql', jql, fields, maxResults };
+        if (nextPageToken) params.nextPageToken = nextPageToken;
+        const { data } = await jiraClient.get('', { params });
+        const page = data.issues ?? [];
+        all = all.concat(page);
+        if (data.isLast || !data.nextPageToken || page.length === 0) break;
+        nextPageToken = data.nextPageToken;
+      } catch (error) {
+        console.error('Error fetching JQL pages:', error);
+        throw error;
+      }
+    }
+    return all;
   },
   
   // Get issues for a specific sprint globally for an employee
   async getEmployeeIssuesGlobal(accountId, sprintIds) {
     if (!sprintIds || sprintIds.length === 0) return [];
-    
-    // JQL query to find all issues assigned to the user in ANY of the given sprint IDs
-    const sprintIdList = sprintIds.join(',');
-    const jql = `assignee = "${accountId}" AND sprint IN (${sprintIdList})`;
-    
-    try {
-      const response = await jiraClient.get('', {
-        params: {
-          endpoint: '/search',
-          jql: jql,
-          fields: 'summary,status,assignee,created,resolutiondate,updated,duedate,subtasks,issuetype,project',
-          maxResults: 100
-        }
-      });
-      return response.data.issues || [];
-    } catch (error) {
-      console.error('Error in global employee search:', error);
-      return [];
-    }
+    const jql = `assignee = "${accountId}" AND sprint IN (${sprintIds.join(',')})`;
+    return this.fetchAllJqlPages(jql, ISSUE_FIELDS);
   },
 
   // Get issues for a sprint on a specific board
   async getBoardSprintIssues(boardId, sprintId) {
-    try {
-      const response = await jiraClient.get('', {
-        params: {
-          endpoint: `/board/${boardId}/sprint/${sprintId}/issue`,
-          fields: 'summary,status,assignee,created,resolutiondate,updated,duedate,subtasks,issuetype,project'
-        }
-      });
-      return response.data.issues;
-    } catch (error) {
-      console.error('Error fetching board sprint issues:', error);
-      throw error;
-    }
+    return this.fetchAllAgilePages(`/board/${boardId}/sprint/${sprintId}/issue`, { fields: ISSUE_FIELDS });
   },
 
   // Get employee metrics for a sprint
