@@ -112,16 +112,12 @@ function App() {
                       const assignee = issue.fields.assignee;
                       const name = assignee.displayName;
                       
-                      // Filter duplicates: Only add if this is the designated board for this person OR if person is new
-                      const designatedBoard = menuSequence.mapping[name];
-                      if (!designatedBoard || designatedBoard === board.name) {
-                        if (!employeesMap.has(assignee.accountId)) {
-                           employeesMap.set(assignee.accountId, {
-                             id: assignee.accountId,
-                             name: name,
-                             email: assignee.emailAddress
-                           });
-                        }
+                      if (!employeesMap.has(assignee.accountId)) {
+                         employeesMap.set(assignee.accountId, {
+                           id: assignee.accountId,
+                           name: name,
+                           email: assignee.emailAddress
+                         });
                       }
                     }
                   });
@@ -151,36 +147,24 @@ function App() {
         sprint.boards.forEach(board => {
           board.employees.forEach(emp => {
             const name = emp.name;
-            const designatedBoard = menuSequence.mapping[name];
-            
-            // If employee not yet added OR this is their designated board, update/add them
-            if (!sprintEmployeesMap.has(name) || designatedBoard === board.name) {
-              const boardName = designatedBoard || board.name;
-              let tag = 'unknown';
-              if (boardName.toLowerCase().includes('eng')) tag = 'eng';
-              else if (boardName.toLowerCase().includes('ai')) tag = 'ai';
-              else if (boardName.toLowerCase().includes('de')) tag = 'de';
-              else if (boardName.toLowerCase().includes('nwp')) tag = 'nwp';
+            const boardName = board.name;
+            let tag = 'unknown';
+            if (boardName.toLowerCase().includes('eng')) tag = 'eng';
+            else if (boardName.toLowerCase().includes('ai')) tag = 'ai';
+            else if (boardName.toLowerCase().includes('de')) tag = 'de';
+            else if (boardName.toLowerCase().includes('nwp')) tag = 'nwp';
 
-              sprintEmployeesMap.set(name, {
-                ...emp,
-                boardName: boardName.split(' ')[0], // "ENG board" -> "ENG"
-                tagClass: `tag-${tag}`,
-                sprintId: board.sprintId,
-                boardId: board.id
-              });
-            }
+            sprintEmployeesMap.set(name, {
+              ...emp,
+              boardName: boardName.split(' ')[0], // "ENG board" -> "ENG"
+              tagClass: `tag-${tag}`,
+              sprintId: board.sprintId,
+              boardId: board.id
+            });
           });
         });
 
-        // Convert map to array and sort relative to menuSequence.employees
         sprint.uniqueEmployees = Array.from(sprintEmployeesMap.values()).sort((a, b) => {
-          const indexA = menuSequence.employees.indexOf(a.name);
-          const indexB = menuSequence.employees.indexOf(b.name);
-          
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
           return a.name.localeCompare(b.name);
         });
       });
