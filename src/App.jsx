@@ -86,6 +86,11 @@ function App() {
             group.endDate = '2026-03-23';
           }
           
+          if (sprintKey.toLowerCase().includes('sprint 3')) {
+            group.startDate = '2026-03-24';
+            group.endDate = '2026-04-06';
+          }
+          
           if (sprint.state === 'active' && group.state !== 'active') {
              group.state = 'active';
              // Only use Jira dates if they haven't been overridden already
